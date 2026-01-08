@@ -3,8 +3,10 @@
 
 #include "CommandPawn.h"
 
+#include "AbilitySystemComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Framework/MapInfo.h"
+#include "Framework/PlayerState/StaPlayerState.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -72,6 +74,29 @@ void ACommandPawn::Tick(float DeltaTime)
 	
 }
 
+void ACommandPawn::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	
+	if (!IsValid(GetAbilitySystemComponent()) || !IsValid(GetPlayerState())) return;
+
+	if (HasAuthority())
+	{
+		GetAbilitySystemComponent()->InitAbilityActorInfo(GetPlayerState(), this);
+	}
+	
+}
+
+void ACommandPawn::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	if (!IsValid(GetAbilitySystemComponent()) || !IsValid(GetPlayerState())) return;
+
+	GetAbilitySystemComponent()->InitAbilityActorInfo(GetPlayerState(), this);
+	
+}
+
 void ACommandPawn::SetScrollHeight(const bool bIsUp)
 {
 	float ScrollAmount = bIsUp ? TargetArmLengthGoTo + ScrollSensitive : TargetArmLengthGoTo - ScrollSensitive;
@@ -97,4 +122,20 @@ void ACommandPawn::MoveTo(FVector Direction)
 	}
 	
 	AddMovementInput(Direction, MapMoveSensitive);
+}
+
+UAbilitySystemComponent* ACommandPawn::GetAbilitySystemComponent() const
+{
+	AStaPlayerState* StaPlayerState = Cast<AStaPlayerState>(GetPlayerState());
+	if (!StaPlayerState) return nullptr;
+	
+	return StaPlayerState->GetAbilitySystemComponent();
+}
+
+UAttributeSet* ACommandPawn::GetAttributeSet() const
+{
+	AStaPlayerState* StaPlayerState = Cast<AStaPlayerState>(GetPlayerState());
+	if (!StaPlayerState) return nullptr;
+	
+	return StaPlayerState->GetAttributeSet();
 }

@@ -30,7 +30,6 @@ void AStaPlayerController::BeginPlay()
 
 	FInputModeGameAndUI CurrentInputMode;
 	CurrentInputMode.SetLockMouseToViewportBehavior(EMouseLockMode::LockAlways);
-	CurrentInputMode.SetHideCursorDuringCapture(true);
 	SetInputMode(CurrentInputMode);
 	
 }

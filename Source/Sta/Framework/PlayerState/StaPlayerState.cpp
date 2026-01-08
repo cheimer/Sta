@@ -2,3 +2,28 @@
 
 
 #include "StaPlayerState.h"
+
+#include "AbilitySystem/StaAbilitySystemComponent.h"
+#include "AbilitySystem/StaAttributeSet.h"
+
+AStaPlayerState::AStaPlayerState()
+{
+	SetNetUpdateFrequency(100.0f);
+	
+	AbilitySystemComponent = CreateDefaultSubobject<UStaAbilitySystemComponent>("AbilitySystemComponent");
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+
+	AttributeSet = CreateDefaultSubobject<UStaAttributeSet>(TEXT("AttributeSet"));
+	
+}
+
+UAbilitySystemComponent* AStaPlayerState::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
+UAttributeSet* AStaPlayerState::GetAttributeSet() const
+{
+	return AttributeSet;
+}

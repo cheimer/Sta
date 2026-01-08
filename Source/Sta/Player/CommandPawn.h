@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemInterface.h"
 #include "GameFramework/Pawn.h"
 #include "CommandPawn.generated.h"
 
+class UAttributeSet;
 class AMapInfo;
 class UFloatingPawnMovement;
 class USpringArmComponent;
@@ -13,7 +15,7 @@ class UCameraComponent;
 class UCharacterMovementComponent;
 
 UCLASS()
-class STA_API ACommandPawn : public APawn
+class STA_API ACommandPawn : public APawn, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -26,8 +28,19 @@ public:
 	void SetScrollHeight(const bool bIsUp);
 	void MoveTo(FVector Direction);
 
+	/**
+	 * IAbilitySystemInterface
+	 * @return ASC
+	 */
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	UAttributeSet* GetAttributeSet() const;	
+
 protected:
 	virtual void BeginPlay() override;
+
+	virtual void PossessedBy(AController* NewController) override;
+	
+	virtual void OnRep_PlayerState() override;
 	
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	USceneComponent* RootSceneComponent;
