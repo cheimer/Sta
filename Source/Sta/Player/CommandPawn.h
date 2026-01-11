@@ -7,6 +7,7 @@
 #include "GameFramework/Pawn.h"
 #include "CommandPawn.generated.h"
 
+class UCardComponent;
 class UAttributeSet;
 class AMapInfo;
 class UFloatingPawnMovement;
@@ -27,6 +28,8 @@ public:
 
 	void SetScrollHeight(const bool bIsUp);
 	void MoveTo(FVector Direction);
+
+	float GetTargetArmLength();
 
 	/**
 	 * IAbilitySystemInterface
@@ -53,6 +56,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	UFloatingPawnMovement* MovementComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UCardComponent* CardComponent;
 
 	UPROPERTY(EditAnywhere, Category = "Sta|Test")
 	bool bIsUpperTeam = false;

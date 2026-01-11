@@ -23,7 +23,9 @@ class STA_API IInteractable
 public:
 	virtual void OnHoverBegin() = 0;
 	virtual void OnHoverEnd() = 0;
-	virtual void OnInteract() = 0;
+	virtual void OnInteractBegin(const FHitResult& HitResult) = 0;
+	virtual void OnInteracting(const FHitResult& HitResult) = 0;
+	virtual void OnInteractEnd(const FHitResult& HitResult) = 0;
 	virtual bool CanInteract() const { return true; }
 	
 };

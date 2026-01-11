@@ -20,7 +20,9 @@ public:
  */
 	virtual void OnHoverBegin() override;
 	virtual void OnHoverEnd() override;
-	virtual void OnInteract() override;
+	virtual void OnInteractBegin(const FHitResult& HitResult) override;
+	virtual void OnInteracting(const FHitResult& HitResult) override;
+	virtual void OnInteractEnd(const FHitResult& HitResult) override;
 
 protected:
 	virtual void BeginPlay() override;

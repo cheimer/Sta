@@ -18,6 +18,30 @@ AStaPlayerState::AStaPlayerState()
 	
 }
 
+void AStaPlayerState::BeginPlay()
+{ 
+	Super::BeginPlay();
+
+	if (HasAuthority())
+	{
+		GiveDefaultAbilities();		
+	}
+}
+
+void AStaPlayerState::GiveDefaultAbilities()
+{
+	if (!AbilitySystemComponent || !HasAuthority()) return;
+
+	for (const TSubclassOf<UGameplayAbility> AbilityClass : DefaultAbilities)
+	{
+		if (AbilityClass)
+		{
+			FGameplayAbilitySpec AbilitySpec(AbilityClass, 1);
+			AbilitySystemComponent->GiveAbility(AbilitySpec);
+		}
+	}
+}
+
 UAbilitySystemComponent* AStaPlayerState::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;

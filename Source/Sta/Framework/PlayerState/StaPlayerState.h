@@ -7,6 +7,7 @@
 #include "GameFramework/PlayerState.h"
 #include "StaPlayerState.generated.h"
 
+class UGameplayAbility;
 class UAttributeSet;
 
 /**
@@ -20,18 +21,26 @@ class STA_API AStaPlayerState : public APlayerState, public IAbilitySystemInterf
 public:
 	AStaPlayerState();
 
+	void GiveDefaultAbilities();
+
 	/**
 	 * AbilitySystemInterface
 	 * @return ASC
 	 */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	
 	UAttributeSet* GetAttributeSet() const;
 
 protected:
-	UPROPERTY(VisibleAnywhere, Category = "Components")
+	virtual void BeginPlay() override;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Component")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 	
 	UPROPERTY()
 	TObjectPtr<UAttributeSet> AttributeSet;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|Ability")
+	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
 	
 };

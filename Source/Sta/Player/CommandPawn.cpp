@@ -5,9 +5,9 @@
 
 #include "AbilitySystemComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Component/CardComponent.h"
 #include "Framework/MapInfo.h"
 #include "Framework/PlayerState/StaPlayerState.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "GameFramework/SpringArmComponent.h"
 
@@ -43,6 +43,9 @@ ACommandPawn::ACommandPawn()
 	MovementComponent->Acceleration = 8000.0f;
 	MovementComponent->Deceleration = 8000.0f;
 	MovementComponent->SetIsReplicated(true);
+
+	CardComponent = CreateDefaultSubobject<UCardComponent>("CardComponent");
+	CardComponent->SetupAttachment(RootComponent);
 	
 }
 
@@ -55,6 +58,12 @@ void ACommandPawn::BeginPlay()
 	if (bIsUpperTeam)
 	{
 		SpringArmComponent->SetRelativeRotation(FRotator(-70.0f, 180.0f, 0.0f));
+	}
+
+	//TODO: Test Card. Remove This later
+	if (IsLocallyControlled())
+	{
+		CardComponent->CreateCard();
 	}
 }
 
@@ -72,6 +81,7 @@ void ACommandPawn::Tick(float DeltaTime)
 		SpringArmComponent->TargetArmLength = FMath::Lerp(SpringArmComponent->TargetArmLength, TargetArmLengthGoTo, DeltaTime * 10.0f);
 	}
 	
+	CardComponent->UpdateCardOffset();
 }
 
 void ACommandPawn::PossessedBy(AController* NewController)
@@ -97,13 +107,6 @@ void ACommandPawn::OnRep_PlayerState()
 	
 }
 
-void ACommandPawn::SetScrollHeight(const bool bIsUp)
-{
-	float ScrollAmount = bIsUp ? TargetArmLengthGoTo + ScrollSensitive : TargetArmLengthGoTo - ScrollSensitive;
-	
-	TargetArmLengthGoTo = FMath::Clamp(ScrollAmount, TargetArmLengthMin, TargetArmLengthMax);
-}
-
 void ACommandPawn::MoveTo(FVector Direction)
 {
 	if (bIsUpperTeam)
@@ -115,7 +118,7 @@ void ACommandPawn::MoveTo(FVector Direction)
 	if (MapInfo->IsOutMap(NextLocation))
 	{
 		FVector2D AdjustLocation2D = MapInfo->ClampLocation(FVector2D(GetActorLocation()));
-		FVector AdjustLocation = FVector(AdjustLocation2D.X, AdjustLocation2D.Y, GetActorLocation().Z);
+		FVector AdjustLocation(AdjustLocation2D, GetActorLocation().Z);
 		SetActorLocation(AdjustLocation);
 		return;
 		
@@ -138,4 +141,18 @@ UAttributeSet* ACommandPawn::GetAttributeSet() const
 	if (!StaPlayerState) return nullptr;
 	
 	return StaPlayerState->GetAttributeSet();
+}
+
+void ACommandPawn::SetScrollHeight(const bool bIsUp)
+{
+	float ScrollAmount = bIsUp ? TargetArmLengthGoTo + ScrollSensitive : TargetArmLengthGoTo - ScrollSensitive;
+	
+	TargetArmLengthGoTo = FMath::Clamp(ScrollAmount, TargetArmLengthMin, TargetArmLengthMax);
+}
+
+float ACommandPawn::GetTargetArmLength()
+{
+	if (!SpringArmComponent) return 0.0f;
+
+	return SpringArmComponent->TargetArmLength;
 }

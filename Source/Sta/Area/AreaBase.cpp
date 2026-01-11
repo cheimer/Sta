@@ -20,15 +20,25 @@ void AAreaBase::BeginPlay()
 
 void AAreaBase::OnHoverBegin()
 {
-	StaDebug::Print("InteractStart");
+	StaDebug::Print("Area Hover Start");
 }
 
 void AAreaBase::OnHoverEnd()
 {
-	StaDebug::Print("InteractEnd");
+	StaDebug::Print("Area Hover End");
 }
 
-void AAreaBase::OnInteract()
+void AAreaBase::OnInteractBegin(const FHitResult& HitResult)
 {
-	StaDebug::Print("InteractOn");
+	StaDebug::Print("Area Interact Begin");
+}
+
+void AAreaBase::OnInteracting(const FHitResult& HitResult)
+{
+	StaDebug::Print("Area Interacting");
+}
+
+void AAreaBase::OnInteractEnd(const FHitResult& HitResult)
+{
+	StaDebug::Print("Area Interact End");
 }
