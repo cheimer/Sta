@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NativeGameplayTags.h"
 
 namespace StaTags
 {
@@ -11,9 +12,9 @@ namespace StaTags
 
 	namespace Event
 	{
-		namespace Player
+		namespace Card
 		{
-			
+			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Use);
 		}
 
 		

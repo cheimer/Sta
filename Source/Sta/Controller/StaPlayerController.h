@@ -43,17 +43,25 @@ protected:
 	virtual void OnPossess(APawn* InPawn) override;
 
 	virtual void UpdateHoveredActor();
-
+	
 	UFUNCTION()
-	void Interact(const FInputActionValue& Value);
+	void InteractBegin(const FInputActionValue& Value);
+	UFUNCTION()
+	void Interacting(const FInputActionValue& Value);
+	UFUNCTION()
+	void InteractEnd(const FInputActionValue& Value);
 	UFUNCTION()
 	void Cancel(const FInputActionValue& Value);
 	UFUNCTION()
 	void Scroll(const FInputActionValue& Value);
+	UFUNCTION()
+	void Move(const FInputActionValue& Value);
 	void EdgeScroll();
 
 	UPROPERTY()
 	TWeakObjectPtr<AActor> HoveredActor;
+	
+	bool bIsInteracting = false;
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Input")

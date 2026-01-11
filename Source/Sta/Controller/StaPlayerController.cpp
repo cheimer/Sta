@@ -12,8 +12,8 @@
 
 AStaPlayerController::AStaPlayerController()
 {
-	
-	
+	bShowMouseCursor = true;
+
 }
 
 void AStaPlayerController::BeginPlay()
@@ -26,10 +26,9 @@ void AStaPlayerController::BeginPlay()
 		EnhancedInputSubsystem->AddMappingContext(MappingContext, static_cast<int32>(EInputPriority::Controller));
 	}
 	
-	bShowMouseCursor = true;
-
 	FInputModeGameAndUI CurrentInputMode;
 	CurrentInputMode.SetLockMouseToViewportBehavior(EMouseLockMode::LockAlways);
+	CurrentInputMode.SetHideCursorDuringCapture(false);
 	SetInputMode(CurrentInputMode);
 	
 }
@@ -76,6 +75,8 @@ void AStaPlayerController::OnPossess(APawn* InPawn)
 
 void AStaPlayerController::UpdateHoveredActor()
 {
+	if (bIsInteracting) return;
+	
 	FHitResult HitResult;
 	GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
 	
@@ -110,13 +111,39 @@ void AStaPlayerController::UpdateHoveredActor()
 
 }
 
-void AStaPlayerController::Interact(const FInputActionValue& Value)
+void AStaPlayerController::InteractBegin(const FInputActionValue& Value)
 {
-	if (!HoveredActor.IsValid()) return;
-
 	if (IInteractable* InteractableActor = Cast<IInteractable>(HoveredActor))
 	{
-		InteractableActor->OnInteract();
+		FHitResult HitResult;
+		GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
+	
+		InteractableActor->OnInteractBegin(HitResult);
+		bIsInteracting = true;
+	}
+	
+}
+
+void AStaPlayerController::Interacting(const FInputActionValue& Value)
+{
+	if (IInteractable* InteractableActor = Cast<IInteractable>(HoveredActor))
+	{
+		FHitResult HitResult;
+		GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
+	
+		InteractableActor->OnInteracting(HitResult);
+	}
+}
+
+void AStaPlayerController::InteractEnd(const FInputActionValue& Value)
+{
+	if (IInteractable* InteractableActor = Cast<IInteractable>(HoveredActor))
+	{
+		FHitResult HitResult;
+		GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
+	
+		InteractableActor->OnInteractEnd(HitResult);
+		bIsInteracting = false;
 	}
 }
 
@@ -141,6 +168,16 @@ void AStaPlayerController::Scroll(const FInputActionValue& Value)
 		}
 	}
 	
+}
+
+void AStaPlayerController::Move(const FInputActionValue& Value)
+{
+	FVector2D MoveValue = Value.Get<FVector2D>();
+	
+	if (ACommandPawn* OwningPawn = Cast<ACommandPawn>(GetPawn()))
+	{
+		OwningPawn->MoveTo(FVector(MoveValue, 0.0f));
+	}
 }
 
 void AStaPlayerController::EdgeScroll()
