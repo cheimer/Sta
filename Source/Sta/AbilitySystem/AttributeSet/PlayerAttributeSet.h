@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
 #include "AttributeSet.h"
-#include "StaAttributeSet.generated.h"
+#include "PlayerAttributeSet.generated.h"
 
 #define ATTRIBUTE_ACCESSORS(ClassName, PropertyName) \
 	GAMEPLAYATTRIBUTE_PROPERTY_GETTER(ClassName, PropertyName) \
@@ -17,12 +17,12 @@
  * 
  */
 UCLASS()
-class STA_API UStaAttributeSet : public UAttributeSet
+class STA_API UPlayerAttributeSet : public UAttributeSet
 {
 	GENERATED_BODY()
 
 public:
-	UStaAttributeSet();
+	UPlayerAttributeSet();
 	
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 

@@ -7,6 +7,7 @@
 #include "Interface/Interactable.h"
 #include "CardBase.generated.h"
 
+class UCapsuleComponent;
 class UCardData;
 class UWidgetComponent;
 
@@ -17,6 +18,8 @@ class STA_API ACardBase : public AActor, public IInteractable
 
 public:
 	ACardBase();
+
+	TArray<AActor*> GetOverlappedActors();
 
 	/**
 	 * Interactable Interface
@@ -33,6 +36,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Component")
 	UStaticMeshComponent* CardMesh;
 
+	UPROPERTY(VisibleAnywhere, Category = "Component")
+	UCapsuleComponent* CardCollision;
+
 	//UPROPERTY(VisibleAnywhere, Category = "Component")
 	//UWidgetComponent* CostWidgetComp;
 	
@@ -45,6 +51,9 @@ protected:
 	FVector OriginalScale;
 
 	bool bIsInteracting = false;
+
+private:
+	TWeakObjectPtr<APawn> OwnerPawn;
 
 public:
 	bool GetIsInteracting() const { return bIsInteracting; }

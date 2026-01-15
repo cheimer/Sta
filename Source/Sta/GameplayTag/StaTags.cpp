@@ -1,8 +1,16 @@
 #include "GameplayTag/StaTags.h"
 
+
+
 namespace StaTags
 {
 	UE_DEFINE_GAMEPLAY_TAG(None, "StaTags.None");
+	
+	namespace SetByCaller
+	{
+		UE_DEFINE_GAMEPLAY_TAG(Cost, "StaTags.SetByCaller.Cost");
+		
+	}
 	
 	namespace Ability
 	{
@@ -10,6 +18,11 @@ namespace StaTags
 		{
 			UE_DEFINE_GAMEPLAY_TAG(Spell, "StaTags.Ability.Card.Spell");
 			UE_DEFINE_GAMEPLAY_TAG(Employ, "StaTags.Ability.Card.Employ");
+		}
+		
+		namespace Area
+		{
+			
 		}
 		
 	}

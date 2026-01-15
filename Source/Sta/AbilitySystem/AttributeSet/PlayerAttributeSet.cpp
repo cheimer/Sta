@@ -1,17 +1,17 @@
 // Sta Project - Multiplay RTS with GAS
 
 
-#include "StaAttributeSet.h"
+#include "PlayerAttributeSet.h"
 
 #include "Net/UnrealNetwork.h"
 
-UStaAttributeSet::UStaAttributeSet()
+UPlayerAttributeSet::UPlayerAttributeSet()
 {
 	InitCost(0.0f);
 	InitMaxCost(10.0f);
 }
 
-void UStaAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+void UPlayerAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
@@ -20,7 +20,7 @@ void UStaAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 	
 }
 
-void UStaAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+void UPlayerAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
 	Super::PreAttributeChange(Attribute, NewValue);
 
@@ -30,17 +30,17 @@ void UStaAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, f
 	}
 }
 
-void UStaAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
+void UPlayerAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
 }
 
-void UStaAttributeSet::OnRep_Cost(const FGameplayAttributeData& OldValue)
+void UPlayerAttributeSet::OnRep_Cost(const FGameplayAttributeData& OldValue)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass, Cost, OldValue);
 }
 
-void UStaAttributeSet::OnRep_MaxCost(const FGameplayAttributeData& OldValue)
+void UPlayerAttributeSet::OnRep_MaxCost(const FGameplayAttributeData& OldValue)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(ThisClass, MaxCost, OldValue);
 }

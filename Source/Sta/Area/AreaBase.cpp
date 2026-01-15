@@ -3,6 +3,9 @@
 
 #include "AreaBase.h"
 
+#include "Sta.h"
+#include "AbilitySystem/StaAbilitySystemComponent.h"
+#include "AbilitySystem/AttributeSet/AreaAttributeSet.h"
 #include "Helper/StaHelper.h"
 
 
@@ -10,6 +13,24 @@ AAreaBase::AAreaBase()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	
+	bReplicates = true;
+
+	AbilitySystemComponent = CreateDefaultSubobject<UStaAbilitySystemComponent>("AbilitySystemComponent");
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+
+	AttributeSet = CreateDefaultSubobject<UAreaAttributeSet>(TEXT("AttributeSet"));
+	
+	AreaMesh = CreateDefaultSubobject<UStaticMeshComponent>("AreaMesh");
+	SetRootComponent(AreaMesh);
+	
+	AreaMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	AreaMesh->SetCollisionObjectType(ECC_Area);
+	AreaMesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	
+	AreaMesh->SetCastShadow(false);
+	
+
 }
 
 void AAreaBase::BeginPlay()
@@ -20,7 +41,7 @@ void AAreaBase::BeginPlay()
 
 void AAreaBase::OnHoverBegin()
 {
-	StaDebug::Print("Area Hover Start");
+	StaDebug::Print(FString::Printf(TEXT("Area Unit Num : Not yet")));
 }
 
 void AAreaBase::OnHoverEnd()
@@ -41,4 +62,14 @@ void AAreaBase::OnInteracting(const FHitResult& HitResult)
 void AAreaBase::OnInteractEnd(const FHitResult& HitResult)
 {
 	StaDebug::Print("Area Interact End");
+}
+
+UAbilitySystemComponent* AAreaBase::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
+UAttributeSet* AAreaBase::GetAttributeSet() const
+{
+	return AttributeSet;
 }

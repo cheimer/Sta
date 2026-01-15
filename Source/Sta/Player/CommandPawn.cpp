@@ -27,6 +27,7 @@ ACommandPawn::ACommandPawn()
 	SpringArmComponent->SetupAttachment(RootComponent);
 	SpringArmComponent->TargetArmLength = TargetArmLengthGoTo;
 	SpringArmComponent->SetRelativeRotation(FRotator(-70.0f, 0.0f, 0.0f));
+	
 	SpringArmComponent->bUsePawnControlRotation = false;
 	SpringArmComponent->bInheritPitch = false;
 	SpringArmComponent->bInheritYaw = false;

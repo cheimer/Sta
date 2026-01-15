@@ -7,6 +7,7 @@
 #include "GameFramework/PlayerState.h"
 #include "StaPlayerState.generated.h"
 
+class UCostComponent;
 class UGameplayAbility;
 class UAttributeSet;
 
@@ -36,6 +37,9 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, Category = "Component")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Component")
+	TObjectPtr<UCostComponent> CostComponent;
 	
 	UPROPERTY()
 	TObjectPtr<UAttributeSet> AttributeSet;

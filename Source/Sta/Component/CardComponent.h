@@ -33,7 +33,7 @@ public:
 	void UpdateCardOffset();
 
 	void CreateCard();
-	void UseCard(ACardBase* Card);
+	void UseCard(ACardBase* Card, AActor* Target);
 
 protected:
 	virtual void BeginPlay() override;

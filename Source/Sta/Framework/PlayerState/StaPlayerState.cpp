@@ -4,7 +4,8 @@
 #include "StaPlayerState.h"
 
 #include "AbilitySystem/StaAbilitySystemComponent.h"
-#include "AbilitySystem/StaAttributeSet.h"
+#include "AbilitySystem/AttributeSet/PlayerAttributeSet.h"
+#include "Component/CostComponent.h"
 
 AStaPlayerState::AStaPlayerState()
 {
@@ -14,7 +15,9 @@ AStaPlayerState::AStaPlayerState()
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
-	AttributeSet = CreateDefaultSubobject<UStaAttributeSet>(TEXT("AttributeSet"));
+	AttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("AttributeSet"));
+
+	CostComponent = CreateDefaultSubobject<UCostComponent>(TEXT("CostComponent"));
 	
 }
 

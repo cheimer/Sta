@@ -85,19 +85,16 @@ void UCardComponent::CreateCard()
 	
 }
 
-void UCardComponent::UseCard(ACardBase* Card)
+void UCardComponent::UseCard(ACardBase* Card, AActor* Target)
 {
-	if (!Card || !Card->GetCardData()) return;
-
-	//TODO: Check can use card
+	if (!GetOwner() || !Card || !Card->GetCardData()) return;
 
 	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner());
 	if (!ASC) return;
 
 	FGameplayEventData EventData;
-	EventData.OptionalObject = Card->GetCardData();
-
+	EventData.OptionalObject = Card;
+	EventData.Target = Target;
 	ASC->HandleGameplayEvent(StaTags::Event::Card::Use, &EventData);
-	
 	
 }

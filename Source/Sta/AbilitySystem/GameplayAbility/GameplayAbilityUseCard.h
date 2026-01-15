@@ -6,6 +6,7 @@
 #include "StaGameplayAbility.h"
 #include "GameplayAbilityUseCard.generated.h"
 
+class UCardData;
 /**
  * 
  */
@@ -21,9 +22,15 @@ public:
 		const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
 protected:
-	void SpellAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	bool CanUseCardCost(const FGameplayAbilityActorInfo* ActorInfo, const UCardData* CardData);
+	void ApplyCardCost(const FGameplayAbilityActorInfo* ActorInfo);
+	
+	virtual void SpellAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo& ActivationInfo, const FGameplayEventData* TriggerEventData);
-	void EmployAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	virtual void EmployAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo& ActivationInfo, const FGameplayEventData* TriggerEventData);
+
+	UPROPERTY(Transient)
+	UCardData* CurrentCardData;
 	
 };

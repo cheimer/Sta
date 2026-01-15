@@ -25,6 +25,6 @@ public:
 	float Cost = 0.0f;
 
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UGameplayEffect> CardEffect;
-	
+	TSubclassOf<UGameplayEffect> CardEffectClass = nullptr;
+
 };

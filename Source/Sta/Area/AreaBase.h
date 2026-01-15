@@ -3,12 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemInterface.h"
 #include "GameFramework/Actor.h"
 #include "Interface/Interactable.h"
 #include "AreaBase.generated.h"
 
+class UAttributeSet;
+class UCapsuleComponent;
+
 UCLASS()
-class STA_API AAreaBase : public AActor, public IInteractable
+class STA_API AAreaBase : public AActor, public IInteractable, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -24,8 +28,26 @@ public:
 	virtual void OnInteracting(const FHitResult& HitResult) override;
 	virtual void OnInteractEnd(const FHitResult& HitResult) override;
 
+	/**
+	 * AbilitySystemInterface
+	 */
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	
+	UAttributeSet* GetAttributeSet() const;
+
 protected:
 	virtual void BeginPlay() override;
-	
 
+	UPROPERTY()
+	TObjectPtr<APlayerState> OwningActor = nullptr;
+
+	UPROPERTY(VisibleAnywhere, Category = "Component")
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+	
+	UPROPERTY()
+	TObjectPtr<UAttributeSet> AttributeSet;
+
+	UPROPERTY(VisibleAnywhere, Category = "Component")
+	UStaticMeshComponent* AreaMesh;
+	
 };
