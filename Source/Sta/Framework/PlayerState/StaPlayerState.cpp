@@ -5,7 +5,6 @@
 
 #include "AbilitySystem/StaAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSet/PlayerAttributeSet.h"
-#include "Component/CostComponent.h"
 
 AStaPlayerState::AStaPlayerState()
 {
@@ -17,7 +16,6 @@ AStaPlayerState::AStaPlayerState()
 
 	AttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("AttributeSet"));
 
-	CostComponent = CreateDefaultSubobject<UCostComponent>(TEXT("CostComponent"));
 	
 }
 
@@ -50,7 +48,7 @@ UAbilitySystemComponent* AStaPlayerState::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
-UAttributeSet* AStaPlayerState::GetAttributeSet() const
+UPlayerAttributeSet* AStaPlayerState::GetAttributeSet() const
 {
 	return AttributeSet;
 }

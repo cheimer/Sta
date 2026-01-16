@@ -8,7 +8,7 @@
 #include "Interface/Interactable.h"
 #include "AreaBase.generated.h"
 
-class UAttributeSet;
+class UAreaAttributeSet;
 class UCapsuleComponent;
 
 UCLASS()
@@ -33,7 +33,7 @@ public:
 	 */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
-	UAttributeSet* GetAttributeSet() const;
+	UAreaAttributeSet* GetAttributeSet() const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -45,7 +45,7 @@ protected:
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 	
 	UPROPERTY()
-	TObjectPtr<UAttributeSet> AttributeSet;
+	TObjectPtr<UAreaAttributeSet> AttributeSet;
 
 	UPROPERTY(VisibleAnywhere, Category = "Component")
 	UStaticMeshComponent* AreaMesh;

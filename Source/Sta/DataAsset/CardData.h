@@ -9,6 +9,19 @@
 
 class UGameplayEffect;
 
+USTRUCT(BlueprintType)
+struct FCardModifier
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag ValueTag = StaTags::SetByCaller::None;
+
+	UPROPERTY(EditDefaultsOnly)
+	float Value = 0.0f;
+	
+};
+
 /**
  * 
  */
@@ -26,5 +39,8 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UGameplayEffect> CardEffectClass = nullptr;
+
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FCardModifier> CardModifiers;
 
 };

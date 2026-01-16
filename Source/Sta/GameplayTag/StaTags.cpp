@@ -8,7 +8,11 @@ namespace StaTags
 	
 	namespace SetByCaller
 	{
+		UE_DEFINE_GAMEPLAY_TAG(None, "StaTags.SetByCaller.None");
+		
 		UE_DEFINE_GAMEPLAY_TAG(Cost, "StaTags.SetByCaller.Cost");
+		UE_DEFINE_GAMEPLAY_TAG(UnitNum, "StaTags.SetByCaller.UnitNum");
+		UE_DEFINE_GAMEPLAY_TAG(Defense, "StaTags.SetByCaller.Defense");
 		
 	}
 	

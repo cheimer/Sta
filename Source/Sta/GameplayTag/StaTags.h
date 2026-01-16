@@ -9,7 +9,11 @@ namespace StaTags
 	
 	namespace SetByCaller
 	{
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(None);
+		
 		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cost);
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(UnitNum);
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Defense);
 		
 	}
 	

@@ -41,7 +41,7 @@ void AAreaBase::BeginPlay()
 
 void AAreaBase::OnHoverBegin()
 {
-	StaDebug::Print(FString::Printf(TEXT("Area Unit Num : Not yet")));
+	StaDebug::Print(FString::Printf(TEXT("Area Unit Num : %f"), GetAttributeSet()->GetUnitNum()));
 }
 
 void AAreaBase::OnHoverEnd()
@@ -69,7 +69,7 @@ UAbilitySystemComponent* AAreaBase::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
-UAttributeSet* AAreaBase::GetAttributeSet() const
+UAreaAttributeSet* AAreaBase::GetAttributeSet() const
 {
 	return AttributeSet;
 }

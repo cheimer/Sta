@@ -7,9 +7,8 @@
 #include "GameFramework/PlayerState.h"
 #include "StaPlayerState.generated.h"
 
-class UCostComponent;
+class UPlayerAttributeSet;
 class UGameplayAbility;
-class UAttributeSet;
 
 /**
  * 
@@ -30,7 +29,7 @@ public:
 	 */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
-	UAttributeSet* GetAttributeSet() const;
+	UPlayerAttributeSet* GetAttributeSet() const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -38,11 +37,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Component")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 	
-	UPROPERTY(VisibleAnywhere, Category = "Component")
-	TObjectPtr<UCostComponent> CostComponent;
-	
 	UPROPERTY()
-	TObjectPtr<UAttributeSet> AttributeSet;
+	TObjectPtr<UPlayerAttributeSet> AttributeSet;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Ability")
 	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
