@@ -7,6 +7,8 @@
 #include "GameFramework/PlayerState.h"
 #include "StaPlayerState.generated.h"
 
+struct FActiveGameplayEffectHandle;
+class UGameplayEffect;
 class UPlayerAttributeSet;
 class UGameplayAbility;
 
@@ -22,6 +24,7 @@ public:
 	AStaPlayerState();
 
 	void GiveDefaultAbilities();
+	void ApplyDefaultEffects();
 
 	/**
 	 * AbilitySystemInterface
@@ -42,5 +45,11 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Ability")
 	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|Effect")
+	TArray<TSubclassOf<UGameplayEffect>> DefaultEffects;
+
+	UPROPERTY()
+	TArray<FActiveGameplayEffectHandle> ActivatedEffectHandles;
 	
 };

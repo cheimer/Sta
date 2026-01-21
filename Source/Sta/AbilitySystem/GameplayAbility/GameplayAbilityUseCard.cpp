@@ -7,6 +7,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSet/PlayerAttributeSet.h"
 #include "Area/AreaBase.h"
+#include "Card/CardTargeting/CardTargeting.h"
 #include "DataAsset/CardData.h"
 #include "GameplayTag/StaTags.h"
 #include "Helper/StaHelper.h"
@@ -28,95 +29,68 @@ void UGameplayAbilityUseCard::ActivateAbility(const FGameplayAbilitySpecHandle H
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	const UCardData* CardData = Cast<UCardData>(TriggerEventData->OptionalObject);
-	if (!CardData)
-	{
-		CancelAbility(Handle, ActorInfo, ActivationInfo, true);
-		return;
-	}
-
-	if (!CanUseCardCost(ActorInfo, CardData))
-	{
-		CancelAbility(Handle, ActorInfo, ActivationInfo, true);
-		return;
-	}
-
 	if (CostGameplayEffectClass)
 	{
 		StaDebug::Print("CostGameplayEffectClass is not using. Should using CardCostEffectClass");
 	}
 
-	if (CardData->CardTag.MatchesAny(GetAssetTags()))
+	const UCardData* CardData = Cast<UCardData>(TriggerEventData->OptionalObject);
+	if (!CardData || !CardData->CardTag.MatchesAny(GetAssetTags()))
 	{
-		if (CardData->CardTag.MatchesTagExact(StaTags::Ability::Card::Spell))
-		{
-			SpellAbility(CardData, TriggerEventData->Target);
-		}
-		else if (CardData->CardTag.MatchesTagExact(StaTags::Ability::Card::Employ))
-		{
-			EmployAbility(CardData, TriggerEventData->Target);
-		}
-		else
-		{
-			CancelAbility(Handle, ActorInfo, ActivationInfo, true);
-			return;
-		}
-
-		ApplyCardCost(ActorInfo, CardData);
+		CancelAbility(Handle, ActorInfo, ActivationInfo, true);
+		return;
 	}
+	
+	if (!CanUseCardCost(CardData))
+	{
+		CancelAbility(Handle, ActorInfo, ActivationInfo, true);
+		return;
+	}
+
+	FGameplayAbilityTargetDataHandle TargetDataHandle = CardData->CardTargeting->FindTargets(GetCurrentActorInfo(), TriggerEventData);
+	if ( TargetDataHandle.Num() <= 0)
+	{
+		CancelAbility(Handle, ActorInfo, ActivationInfo, true);
+	}
+
+	ApplyCardCost(CardData);
+	ActivateCardAbility(CardData, TargetDataHandle);
 	
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
 
-bool UGameplayAbilityUseCard::CanUseCardCost(const FGameplayAbilityActorInfo* ActorInfo, const UCardData* CardData)
+bool UGameplayAbilityUseCard::CanUseCardCost(const UCardData* CardData)
 {
 	if (!CardData) return false;
 
-	UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
-	if (!ASC) return false;
+	UAbilitySystemComponent* OwnerASC = GetCurrentActorInfo()->AbilitySystemComponent.Get();
+	if (!OwnerASC) return false;
 
-	float CurrentCost = ASC->GetNumericAttribute(UPlayerAttributeSet::GetCostAttribute());
+	float CurrentCost = OwnerASC->GetNumericAttribute(UPlayerAttributeSet::GetCostAttribute());
+	
 	return CurrentCost >= CardData->Cost;
 }
 
-void UGameplayAbilityUseCard::ApplyCardCost(const FGameplayAbilityActorInfo* ActorInfo, const UCardData* CardData)
+void UGameplayAbilityUseCard::ApplyCardCost(const UCardData* CardData)
 {
-	if (!ActorInfo || !CardData || !CardCostEffectClass) return;
+	if (!CardData || !CardCostEffectClass) return;
 	
-	UAbilitySystemComponent* ASC = ActorInfo->AbilitySystemComponent.Get();
-	if (!ASC) return;
-
 	FGameplayEffectSpecHandle CostSpecHandle = MakeOutgoingGameplayEffectSpec(CardCostEffectClass);
 	if (!CostSpecHandle.IsValid() || !CostSpecHandle.Data.IsValid()) return;
-	
+
 	CostSpecHandle.Data->SetSetByCallerMagnitude(StaTags::SetByCaller::Cost, -CardData->Cost);
 	
-	ASC->ApplyGameplayEffectSpecToSelf(*CostSpecHandle.Data.Get());
+	ApplyGameplayEffectSpecToOwner(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), CostSpecHandle);
 }
 
-void UGameplayAbilityUseCard::SpellAbility(const UCardData* CardData, const AActor* TargetActor)
+void UGameplayAbilityUseCard::ActivateCardAbility(const UCardData* CardData, const FGameplayAbilityTargetDataHandle TargetDataHandle)
 {
 	if (bShowDebug)
 	{
-		StaDebug::Print(FString::Printf(TEXT("%s Spell Ability"), *GetName()));
+		StaDebug::Print(FString::Printf(TEXT("%s Activate Ability"), *GetName()));
 	}
-
-}
-
-void UGameplayAbilityUseCard::EmployAbility(const UCardData* CardData, const AActor* TargetActor)
-{
-	if (bShowDebug)
-	{
-		StaDebug::Print(FString::Printf(TEXT("%s Employ Ability"), *GetName()));
-	}
-
-	if (!CardData || !CardData->CardEffectClass) return;
 	
-	const IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(TargetActor);
-	if (!AbilityInterface) return;
-
-	UAbilitySystemComponent* TargetASC = AbilityInterface->GetAbilitySystemComponent();
-	if (!TargetASC) return;
+	if (!CardData || !CardData->CardEffectClass) return;
 
 	FGameplayEffectSpecHandle CardEffectHandle = MakeOutgoingGameplayEffectSpec(CardData->CardEffectClass);
 	if (!CardEffectHandle.IsValid() || !CardEffectHandle.Data.IsValid()) return;
@@ -126,6 +100,6 @@ void UGameplayAbilityUseCard::EmployAbility(const UCardData* CardData, const AAc
 		CardEffectHandle.Data->SetSetByCallerMagnitude(CardModifier.ValueTag, CardModifier.Value);
 	}
 
-	TargetASC->ApplyGameplayEffectSpecToSelf(*CardEffectHandle.Data.Get());
+	ApplyGameplayEffectSpecToTarget(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), CardEffectHandle, TargetDataHandle);
 	
 }

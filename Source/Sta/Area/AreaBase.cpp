@@ -56,7 +56,7 @@ void AAreaBase::OnInteractBegin(const FHitResult& HitResult)
 
 void AAreaBase::OnInteracting(const FHitResult& HitResult)
 {
-	StaDebug::Print("Area Interacting");
+
 }
 
 void AAreaBase::OnInteractEnd(const FHitResult& HitResult)

@@ -6,6 +6,11 @@
 #include "GameFramework/HUD.h"
 #include "StaHUD.generated.h"
 
+class UPlayerAttributeSet;
+class UPlayWidget;
+struct FOnAttributeChangeData;
+class UAbilitySystemComponent;
+
 /**
  * 
  */
@@ -16,15 +21,30 @@ class STA_API AStaHUD : public AHUD
 
 public:
 	virtual void BeginPlay() override;
+
+	virtual void SetASCBinding(UAbilitySystemComponent* OwnerASC);
 	
 	UFUNCTION(BlueprintCallable, Category = "Sta|WidgetFunc")
 	void OnDrawButtonClicked();
 
 protected:
+	void OnCostChanged(const FOnAttributeChangeData& ChangedData);
+	void OnDrawChargeChanged(const FOnAttributeChangeData& ChangedData);
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Widget")
-	TSubclassOf<UUserWidget> MainWidgetClass;
+	TSubclassOf<UPlayWidget> MainWidgetClass;
 
 	UPROPERTY()
-	UUserWidget* CurrentWidget;
+	UPlayWidget* CurrentWidget;
+
+private:
+	FDelegateHandle CostChangedHandle;
+	FDelegateHandle DrawChargeChangedHandle;
+
+	UPROPERTY()
+	TWeakObjectPtr<UAbilitySystemComponent> PlayerASC;
+
+	UPROPERTY()
+	const UPlayerAttributeSet* PlayerSet;
 	
 };

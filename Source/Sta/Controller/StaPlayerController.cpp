@@ -3,12 +3,16 @@
 
 #include "StaPlayerController.h"
 
+#include "AbilitySystemComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "GameFramework/PlayerState.h"
+#include "GameplayTag/StaTags.h"
 #include "Helper/StaHelper.h"
 #include "Interface/Interactable.h"
 #include "Player/CommandPawn.h"
 #include "Type/StaEnum.h"
+#include "UI/StaHUD.h"
 
 AStaPlayerController::AStaPlayerController()
 {
@@ -73,6 +77,17 @@ void AStaPlayerController::OnPossess(APawn* InPawn)
 	}
 }
 
+void AStaPlayerController::ActiveGameplayEvent(FGameplayTag GameplayTag, const FGameplayEventData* EventData)
+{
+	const IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(GetPawn());
+	if (!AbilityInterface) return;
+
+	UAbilitySystemComponent* PawnASC = AbilityInterface->GetAbilitySystemComponent();
+	if (!PawnASC) return;
+	
+	PawnASC->HandleGameplayEvent(GameplayTag, EventData);
+}
+
 void AStaPlayerController::UpdateHoveredActor()
 {
 	if (bIsInteracting) return;
@@ -110,6 +125,47 @@ void AStaPlayerController::UpdateHoveredActor()
 	}
 
 }
+
+void AStaPlayerController::OnRep_Pawn()
+{
+	Super::OnRep_Pawn();
+
+	TryBindingHUD();
+	
+}
+
+void AStaPlayerController::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	TryBindingHUD();
+}
+
+void AStaPlayerController::TryBindingHUD()
+{
+	if (!IsLocalController()) return;
+
+	if (bHUDBounding) return;
+
+	if (!GetPawn() || !PlayerState) return;
+	
+	IAbilitySystemInterface* AbilitySystemInterface = Cast<IAbilitySystemInterface>(PlayerState);
+	if (!AbilitySystemInterface) return;
+	
+	UAbilitySystemComponent* PawnASC = AbilitySystemInterface->GetAbilitySystemComponent();
+	if (!PawnASC) return;
+	
+	AStaHUD* StaHUD = Cast<AStaHUD>(GetHUD());
+	if (!StaHUD) return;
+	
+	StaHUD->SetASCBinding(PawnASC);
+	bHUDBounding = true;
+	
+}
+
+/////////////////////
+/// Input Actions
+/////////////////////
 
 void AStaPlayerController::InteractBegin(const FInputActionValue& Value)
 {

@@ -4,6 +4,7 @@
 #include "CommandPawn.h"
 
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/AttributeSet/PlayerAttributeSet.h"
 #include "Camera/CameraComponent.h"
 #include "Component/CardComponent.h"
 #include "Framework/MapInfo.h"
@@ -61,7 +62,6 @@ void ACommandPawn::BeginPlay()
 		SpringArmComponent->SetRelativeRotation(FRotator(-70.0f, 180.0f, 0.0f));
 	}
 
-	//TODO: Test Card. Remove This later
 	if (IsLocallyControlled())
 	{
 		CardComponent->CreateCard();
@@ -130,13 +130,13 @@ void ACommandPawn::MoveTo(FVector Direction)
 
 UAbilitySystemComponent* ACommandPawn::GetAbilitySystemComponent() const
 {
-	AStaPlayerState* StaPlayerState = Cast<AStaPlayerState>(GetPlayerState());
-	if (!StaPlayerState) return nullptr;
+	IAbilitySystemInterface* AbilitySystemInterface = Cast<IAbilitySystemInterface>(GetPlayerState());
+	if (!AbilitySystemInterface) return nullptr;
 	
-	return StaPlayerState->GetAbilitySystemComponent();
+	return AbilitySystemInterface->GetAbilitySystemComponent();
 }
 
-UAttributeSet* ACommandPawn::GetAttributeSet() const
+UPlayerAttributeSet* ACommandPawn::GetAttributeSet() const
 {
 	AStaPlayerState* StaPlayerState = Cast<AStaPlayerState>(GetPlayerState());
 	if (!StaPlayerState) return nullptr;

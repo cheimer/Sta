@@ -93,8 +93,10 @@ void UCardComponent::UseCard(ACardBase* Card, AActor* Target)
 	if (!ASC) return;
 
 	FGameplayEventData EventData;
+	EventData.Instigator = GetOwner();
 	EventData.OptionalObject = Card->GetCardData();
 	EventData.Target = Target;
+	
 	ASC->HandleGameplayEvent(StaTags::Event::Card::Use, &EventData);
 	
 }

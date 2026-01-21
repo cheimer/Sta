@@ -7,6 +7,7 @@
 #include "GameFramework/Pawn.h"
 #include "CommandPawn.generated.h"
 
+class UPlayerAttributeSet;
 class UCardComponent;
 class UAttributeSet;
 class AMapInfo;
@@ -36,7 +37,7 @@ public:
 	 * @return ASC
 	 */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	UAttributeSet* GetAttributeSet() const;	
+	UPlayerAttributeSet* GetAttributeSet() const;	
 
 protected:
 	virtual void BeginPlay() override;

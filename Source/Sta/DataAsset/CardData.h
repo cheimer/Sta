@@ -7,6 +7,7 @@
 #include "GameplayTag/StaTags.h"
 #include "CardData.generated.h"
 
+class UCardTargeting;
 class UGameplayEffect;
 
 USTRUCT(BlueprintType)
@@ -42,5 +43,8 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	TArray<FCardModifier> CardModifiers;
+
+	UPROPERTY(EditDefaultsOnly, Instanced)
+	TObjectPtr<UCardTargeting> CardTargeting = nullptr;
 
 };

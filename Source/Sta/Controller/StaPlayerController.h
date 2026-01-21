@@ -8,6 +8,8 @@
 #include "StaPlayerController.generated.h"
 
 
+struct FGameplayEventData;
+struct FGameplayTag;
 class UInputMappingContext;
 
 USTRUCT(BlueprintType)
@@ -35,6 +37,8 @@ class STA_API AStaPlayerController : public APlayerController
 public:
 	AStaPlayerController();
 
+	void ActiveGameplayEvent(FGameplayTag GameplayTag, const FGameplayEventData* EventData);
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
@@ -43,6 +47,9 @@ protected:
 	virtual void OnPossess(APawn* InPawn) override;
 
 	virtual void UpdateHoveredActor();
+
+	virtual void OnRep_Pawn() override;
+	virtual void OnRep_PlayerState() override;
 	
 	UFUNCTION()
 	void InteractBegin(const FInputActionValue& Value);
@@ -64,6 +71,8 @@ protected:
 	bool bIsInteracting = false;
 
 private:
+	void TryBindingHUD();
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Input")
 	UInputMappingContext* MappingContext;
 	
@@ -72,5 +81,7 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Value")
 	float EdgeSensitive = 50.0f;
+
+	bool bHUDBounding = false;
 	
 };
