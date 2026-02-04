@@ -12,4 +12,8 @@ class STA_API UStaAbilitySystemComponent : public UAbilitySystemComponent
 {
 	GENERATED_BODY()
 
+public:
+	UFUNCTION(Server, Reliable)
+	void ServerHandleGameplayEvent(FGameplayTag GameplayTag, const FGameplayEventData& EventData);
+
 };

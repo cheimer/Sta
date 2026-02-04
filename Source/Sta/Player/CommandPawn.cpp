@@ -8,6 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "Component/CardComponent.h"
 #include "Framework/MapInfo.h"
+#include "Framework/GameMode/StaGameModeBase.h"
 #include "Framework/PlayerState/StaPlayerState.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -47,7 +48,7 @@ ACommandPawn::ACommandPawn()
 	MovementComponent->SetIsReplicated(true);
 
 	CardComponent = CreateDefaultSubobject<UCardComponent>("CardComponent");
-	CardComponent->SetupAttachment(RootComponent);
+	CardComponent->SetupAttachment(CameraComponent);
 	
 }
 
@@ -62,10 +63,6 @@ void ACommandPawn::BeginPlay()
 		SpringArmComponent->SetRelativeRotation(FRotator(-70.0f, 180.0f, 0.0f));
 	}
 
-	if (IsLocallyControlled())
-	{
-		CardComponent->CreateCard();
-	}
 }
 
 void ACommandPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

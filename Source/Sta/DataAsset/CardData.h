@@ -7,6 +7,7 @@
 #include "GameplayTag/StaTags.h"
 #include "CardData.generated.h"
 
+class ACardBase;
 class UCardTargeting;
 class UGameplayEffect;
 
@@ -32,6 +33,9 @@ class STA_API UCardData : public UPrimaryDataAsset
 	GENERATED_BODY()
 	
 public:
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<ACardBase> CardClass = nullptr;
+	
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTag CardTag = StaTags::None;
 

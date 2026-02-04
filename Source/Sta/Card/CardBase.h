@@ -29,6 +29,7 @@ public:
 	virtual void OnInteractBegin(const FHitResult& HitResult) override;
 	virtual void OnInteracting(const FHitResult& HitResult) override;
 	virtual void OnInteractEnd(const FHitResult& HitResult) override;
+	virtual const TArray<FInteractOption>& GetInteractOptions() override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -39,24 +40,26 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Component")
 	UCapsuleComponent* CardCollision;
 
-	//UPROPERTY(VisibleAnywhere, Category = "Component")
-	//UWidgetComponent* CostWidgetComp;
-	
 	UPROPERTY(EditAnywhere, Category = "Sta|Value")
 	float HoveringScale = 1.5f;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Sta|Value")
-	TObjectPtr<UCardData> CardData;
+	UPROPERTY()
+	TObjectPtr<const UCardData> CardData;
 	
 	FVector OriginalScale;
 
 	bool bIsInteracting = false;
 
 private:
+	void SetOptions();
+	
 	TWeakObjectPtr<APawn> OwnerPawn;
 
+	TArray<FInteractOption> Options;
+	
 public:
 	bool GetIsInteracting() const { return bIsInteracting; }
-	TObjectPtr<UCardData> GetCardData() const { return CardData; }
+	TObjectPtr<const UCardData> GetCardData() const { return CardData; }
+	void SetCardData(const UCardData* InCardData) { CardData = InCardData; }
 
 };

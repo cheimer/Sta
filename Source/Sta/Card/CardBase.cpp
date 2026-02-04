@@ -5,10 +5,12 @@
 
 #include "Sta.h"
 #include "Area/AreaBase.h"
+#include "Area/DiscardCard.h"
 #include "Camera/CameraComponent.h"
 #include "Component/CardComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "GameFramework/SpringArmComponent.h"
+#include "Components/WidgetComponent.h"
+#include "GameplayTag/StaTags.h"
 #include "Helper/StaHelper.h"
 
 
@@ -34,9 +36,6 @@ ACardBase::ACardBase()
 	CardCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
 	CardCollision->SetCollisionResponseToChannel(ECC_Area, ECR_Overlap);
 	
-	//CostWidgetComp = CreateDefaultSubobject<UWidgetComponent>("CostWidgetComponent");
-	//CostWidgetComp->SetupAttachment(CardMesh);
-	
 }
 
 void ACardBase::BeginPlay()
@@ -49,6 +48,17 @@ void ACardBase::BeginPlay()
 	{
 		OwnerPawn = Cast<APawn>(GetOwner());
 	}
+
+	SetOptions();
+}
+
+void ACardBase::SetOptions()
+{
+	FInteractOption InteractOption;
+	InteractOption.DisplayName = FText::GetEmpty();
+	InteractOption.InteractTag = StaTags::Interaction::Card::None;
+
+	Options.Add(InteractOption);
 	
 }
 
@@ -65,7 +75,6 @@ void ACardBase::OnHoverEnd()
 
 void ACardBase::OnInteractBegin(const FHitResult& HitResult)
 {
-	StaDebug::Print(FString::Printf(TEXT("%s is Interact Begin"), *GetName()));
 	bIsInteracting = true;
 }
 
@@ -90,29 +99,35 @@ void ACardBase::OnInteracting(const FHitResult& HitResult)
 
 void ACardBase::OnInteractEnd(const FHitResult& HitResult)
 {
-	StaDebug::Print(FString::Printf(TEXT("%s is Interact End"), *GetName()));
-
 	if (!GetOwner() || !CardCollision) return;
 	UCardComponent* CardComp = GetOwner()->GetComponentByClass<UCardComponent>();
 	if (!CardComp) return;
 
-	AActor* TargetActor = nullptr;
-	TArray<AActor*> Overlapped;
-	CardCollision->GetOverlappingActors(Overlapped, AAreaBase::StaticClass());
-	
-	if (Overlapped.Num() == 0)
+	TArray<AActor*> OverlappedDiscard;
+	CardCollision->GetOverlappingActors(OverlappedDiscard, ADiscardCard::StaticClass());
+	if (OverlappedDiscard.Num() > 0)
+	{
+		CardComp->DiscardCard(this);
+		return;
+	}
+
+	AActor* TargetArea = nullptr;
+	TArray<AActor*> OverlappedAreas;
+	CardCollision->GetOverlappingActors(OverlappedAreas, AAreaBase::StaticClass());
+
+	if (OverlappedAreas.Num() == 0)
 	{
 		bIsInteracting = false;
 		return;
 	}
-	else if (Overlapped.Num() == 1)
+	else if (OverlappedAreas.Num() == 1)
 	{
-		TargetActor = Overlapped[0];
+		TargetArea = OverlappedAreas[0];
 	}
 	else
 	{
 		float MinDistance = TNumericLimits<float>::Max();
-		for (auto OverlapActor : Overlapped)
+		for (auto OverlapActor : OverlappedAreas)
 		{
 			FVector ClosestLocation;
 			float Distance = CardCollision->GetClosestPointOnCollision(OverlapActor->GetActorLocation(), ClosestLocation);
@@ -120,14 +135,19 @@ void ACardBase::OnInteractEnd(const FHitResult& HitResult)
 			if (Distance < MinDistance)
 			{
 				MinDistance = Distance;
-				TargetActor = OverlapActor;
+				TargetArea = OverlapActor;
 			}
 		}
 	}
 	
-	CardComp->UseCard(this, TargetActor);
+	CardComp->UseCard(this, TargetArea);
 	bIsInteracting = false;
 	
+}
+
+const TArray<FInteractOption>& ACardBase::GetInteractOptions()
+{
+	return Options;
 }
 
 TArray<AActor*> ACardBase::GetOverlappedActors()

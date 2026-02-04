@@ -6,6 +6,8 @@
 #include "Components/ActorComponent.h"
 #include "CardComponent.generated.h"
 
+class ADiscardCard;
+class UCardData;
 class ACardBase;
 
 USTRUCT()
@@ -15,7 +17,7 @@ struct FCardInfo
 
 public:
 	UPROPERTY(EditAnywhere, Category = "Sta|CardInfo")
-	TSubclassOf<ACardBase> CardClass = nullptr;
+	TObjectPtr<UCardData> CardData = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Sta|CardInfo")
 	int32 CardNum = 1;
@@ -32,14 +34,17 @@ public:
 
 	void UpdateCardOffset();
 
-	void CreateCard();
+	void AddCardToHand(const UCardData* DrawCardData);
+	void RemoveCardFromHand(const UCardData* RemoveCardData);
+	
 	void UseCard(ACardBase* Card, AActor* Target);
+	void DiscardCard(ACardBase* Card);
 
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Sta|Value")
-	TArray<FCardInfo> CardInfos;
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|CardInfo")
+	TArray<FCardInfo> DeckList;
 
 	UPROPERTY(EditAnywhere, Category = "Sta|Value")
 	FVector2D CardOffset = FVector2D(0.5f, 0.8f);
@@ -53,10 +58,28 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Sta|Value")
 	float CardSpace = 120.0f;
 
+	UPROPERTY(EditAnywhere, Category = "Sta|Discard")
+	FVector2D DiscardDistance = FVector2D(-200.0f, -800.0f);
+	
 private:
+	void CreateDiscardCard();
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|Discard")
+	TSubclassOf<ADiscardCard> DiscardClass;
+	
+	UPROPERTY(Transient)
+	TObjectPtr<ADiscardCard> DiscardCardActor;
+
 	UPROPERTY()
 	TArray<TObjectPtr<ACardBase>> HandCards;
 
 	float DefaultArmLength = 0.0f;
+
+	UPROPERTY(Transient)
+	TObjectPtr<ACardBase> RecentCard;
+
+public:
+	const TArray<FCardInfo>& GetDeckList() { return DeckList; }
+	
 
 };

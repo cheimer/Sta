@@ -7,6 +7,7 @@
 #include "GameFramework/PlayerState.h"
 #include "StaPlayerState.generated.h"
 
+struct FOnAttributeChangeData;
 struct FActiveGameplayEffectHandle;
 class UGameplayEffect;
 class UPlayerAttributeSet;
@@ -36,6 +37,9 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+	UFUNCTION()
+	void HandleChargeComplete();
 	
 	UPROPERTY(VisibleAnywhere, Category = "Component")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;

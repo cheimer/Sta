@@ -27,6 +27,7 @@ public:
 	virtual void OnInteractBegin(const FHitResult& HitResult) override;
 	virtual void OnInteracting(const FHitResult& HitResult) override;
 	virtual void OnInteractEnd(const FHitResult& HitResult) override;
+	virtual const TArray<FInteractOption>& GetInteractOptions() override;
 
 	/**
 	 * AbilitySystemInterface
@@ -49,5 +50,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = "Component")
 	UStaticMeshComponent* AreaMesh;
+
+private:
+	void SetInteractOptions();
+	
+	TArray<FInteractOption> Options;
 	
 };

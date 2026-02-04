@@ -6,6 +6,9 @@
 #include "GameFramework/HUD.h"
 #include "StaHUD.generated.h"
 
+struct FInteractOption;
+struct FGameplayTag;
+class UOrderListWidget;
 class UPlayerAttributeSet;
 class UPlayWidget;
 struct FOnAttributeChangeData;
@@ -27,6 +30,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Sta|WidgetFunc")
 	void OnDrawButtonClicked();
 
+	void HandleControllerStateChanged(FGameplayTag BeforeState, FGameplayTag AfterState, const TArray<FInteractOption>& NewOptions);
+
 protected:
 	void OnCostChanged(const FOnAttributeChangeData& ChangedData);
 	void OnDrawChargeChanged(const FOnAttributeChangeData& ChangedData);
@@ -34,7 +39,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Widget")
 	TSubclassOf<UPlayWidget> MainWidgetClass;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|Widget")
+	TSubclassOf<UOrderListWidget> AreaOrderWidgetClass;
+
+	UPROPERTY(Transient)
 	UPlayWidget* CurrentWidget;
 
 private:
@@ -46,5 +54,8 @@ private:
 
 	UPROPERTY()
 	const UPlayerAttributeSet* PlayerSet;
+
+	UPROPERTY()
+	TArray<UUserWidget*> MenuWidgets;
 	
 };

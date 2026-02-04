@@ -14,7 +14,6 @@ namespace StaTags
 		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cost);
 		UE_DECLARE_GAMEPLAY_TAG_EXTERN(UnitNum);
 		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Defense);
-		
 	}
 	
 	namespace Ability
@@ -29,7 +28,6 @@ namespace StaTags
 		{
 			
 		}
-		
 	}
 
 	namespace Event
@@ -38,8 +36,32 @@ namespace StaTags
 		{
 			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Draw);
 			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Use);
+			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Discard);
 		}
-		
 	}
 	
+	namespace Interaction
+	{
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Card_Root);
+		namespace Card
+		{
+			UE_DECLARE_GAMEPLAY_TAG_EXTERN(None);
+		}
+		
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Area_Root);
+		namespace Area
+		{
+			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Info);
+			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Move);
+			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cancel);
+		}
+	}
+	
+	namespace State
+	{
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Idle);
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Drag);
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Menu);
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Targeting);
+	}
 }

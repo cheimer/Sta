@@ -5,10 +5,12 @@
 
 #include "AbilitySystemComponent.h"
 #include "PlayWidget.h"
+#include "OrderListWidget.h"
 #include "AbilitySystem/AttributeSet/PlayerAttributeSet.h"
 #include "Blueprint/UserWidget.h"
 #include "Controller/StaPlayerController.h"
 #include "GameplayTag/StaTags.h"
+#include "Helper/StaHelper.h"
 
 void AStaHUD::BeginPlay()
 {
@@ -16,6 +18,11 @@ void AStaHUD::BeginPlay()
 
 	CurrentWidget = CreateWidget<UPlayWidget>(GetWorld(), MainWidgetClass);
 	CurrentWidget->AddToViewport();
+
+	if (AStaPlayerController* PlayerController = Cast<AStaPlayerController>(GetOwningPlayerController()))
+	{
+		PlayerController->OnControllerStateChanged.AddUObject(this, &ThisClass::HandleControllerStateChanged);
+	}
 	
 }
 
@@ -52,8 +59,32 @@ void AStaHUD::OnDrawButtonClicked()
 	FGameplayEventData EventData;
 	EventData.Target = OwnerPlayerController->GetPawn();
 	
-	OwnerPlayerController->ActiveGameplayEvent(StaTags::Event::Card::Draw, &EventData);
+	OwnerPlayerController->TriggerGameplayEvent(StaTags::Event::Card::Draw, &EventData);
 	
+}
+
+void AStaHUD::HandleControllerStateChanged(FGameplayTag BeforeState, FGameplayTag AfterState, const TArray<FInteractOption>& NewOptions)
+{
+	if (AfterState.MatchesTagExact(StaTags::State::Menu))
+	{
+		FVector2D WidgetLocation;
+		APlayerController* OwningPC = GetOwningPlayerController();
+		if (!OwningPC) return;
+
+		OwningPC->GetMousePosition(WidgetLocation.X, WidgetLocation.Y);
+		
+		UUserWidget* NewOrderWidget = UOrderListWidget::Create(GetWorld(), AreaOrderWidgetClass, NewOptions, WidgetLocation, MenuWidgets.Num() + 1);
+		if (!NewOrderWidget) return;
+
+		MenuWidgets.Add(NewOrderWidget);
+	}
+	else if (BeforeState.MatchesTagExact(StaTags::State::Menu) && !AfterState.MatchesTagExact(StaTags::State::Menu))
+	{
+		for (UUserWidget* MenuWidget : MenuWidgets)
+		{
+			MenuWidget->RemoveFromParent();
+		}
+	}
 }
 
 void AStaHUD::OnCostChanged(const FOnAttributeChangeData& ChangedData)

@@ -13,6 +13,8 @@
 	GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
 	GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
+DECLARE_MULTICAST_DELEGATE(FOnChargeComplete);
+
 /**
  * 
  */
@@ -47,6 +49,8 @@ public:
 	FGameplayAttributeData ChargeRate;
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxCharge)
 	FGameplayAttributeData MaxCharge;
+
+	FOnChargeComplete OnChargeComplete;
 
 protected:
 	UFUNCTION()

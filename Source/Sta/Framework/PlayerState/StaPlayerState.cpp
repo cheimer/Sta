@@ -5,6 +5,8 @@
 
 #include "AbilitySystem/StaAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSet/PlayerAttributeSet.h"
+#include "GameplayTag/StaTags.h"
+#include "Helper/StaHelper.h"
 
 AStaPlayerState::AStaPlayerState()
 {
@@ -28,12 +30,22 @@ void AStaPlayerState::BeginPlay()
 		GiveDefaultAbilities();
 		ApplyDefaultEffects();
 	}
+
+	if (HasAuthority())
+	{
+		
+		if (GetAttributeSet())
+		{
+			GetAttributeSet()->OnChargeComplete.AddUObject(this, &ThisClass::HandleChargeComplete);
+		}
+	}
+
 }
 
 void AStaPlayerState::GiveDefaultAbilities()
 {
 	if (!AbilitySystemComponent || !HasAuthority()) return;
-
+	
 	for (const TSubclassOf<UGameplayAbility> AbilityClass : DefaultAbilities)
 	{
 		if (AbilityClass)
@@ -66,6 +78,16 @@ void AStaPlayerState::ApplyDefaultEffects()
 		}
 	}
 
+}
+
+void AStaPlayerState::HandleChargeComplete()
+{
+	if (!GetAbilitySystemComponent() || !GetPlayerController()) return;
+
+	FGameplayEventData EventData;
+	EventData.Target = GetPlayerController()->GetPawn();
+	
+	GetAbilitySystemComponent()->HandleGameplayEvent(StaTags::Event::Card::Draw, &EventData);
 }
 
 UAbilitySystemComponent* AStaPlayerState::GetAbilitySystemComponent() const

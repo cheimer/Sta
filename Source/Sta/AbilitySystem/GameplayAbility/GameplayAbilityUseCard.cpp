@@ -9,6 +9,8 @@
 #include "Area/AreaBase.h"
 #include "Card/CardTargeting/CardTargeting.h"
 #include "DataAsset/CardData.h"
+#include "Framework/GameMode/StaGameModeBase.h"
+#include "GameFramework/PlayerState.h"
 #include "GameplayTag/StaTags.h"
 #include "Helper/StaHelper.h"
 
@@ -16,6 +18,8 @@ UGameplayAbilityUseCard::UGameplayAbilityUseCard()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	bRetriggerInstancedAbility = false;
+	
+	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 	
 	FAbilityTriggerData TriggerData;
 	TriggerData.TriggerTag = StaTags::Event::Card::Use;
@@ -34,27 +38,51 @@ void UGameplayAbilityUseCard::ActivateAbility(const FGameplayAbilitySpecHandle H
 		StaDebug::Print("CostGameplayEffectClass is not using. Should using CardCostEffectClass");
 	}
 
+	AStaGameModeBase* GameMode = GetWorld()->GetAuthGameMode<AStaGameModeBase>();
+	APlayerState* PS = Cast<APlayerState>(GetOwningActorFromActorInfo());
+
+	if (!GameMode || !PS)
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
+
+	APlayerController* PC = Cast<APlayerController>(PS->GetOwner());
+	if (!PC)
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
+
 	const UCardData* CardData = Cast<UCardData>(TriggerEventData->OptionalObject);
 	if (!CardData || !CardData->CardTag.MatchesAny(GetAssetTags()))
 	{
-		CancelAbility(Handle, ActorInfo, ActivationInfo, true);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 	
 	if (!CanUseCardCost(CardData))
 	{
-		CancelAbility(Handle, ActorInfo, ActivationInfo, true);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
 	FGameplayAbilityTargetDataHandle TargetDataHandle = CardData->CardTargeting->FindTargets(GetCurrentActorInfo(), TriggerEventData);
-	if ( TargetDataHandle.Num() <= 0)
+	if (TargetDataHandle.Num() <= 0)
 	{
-		CancelAbility(Handle, ActorInfo, ActivationInfo, true);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+	}
+
+	if (!GameMode->CardInHand(PC, CardData))
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
 	}
 
 	ApplyCardCost(CardData);
 	ActivateCardAbility(CardData, TargetDataHandle);
+	
+	GameMode->DiscardCard(PC, CardData);
 	
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
@@ -85,11 +113,6 @@ void UGameplayAbilityUseCard::ApplyCardCost(const UCardData* CardData)
 
 void UGameplayAbilityUseCard::ActivateCardAbility(const UCardData* CardData, const FGameplayAbilityTargetDataHandle TargetDataHandle)
 {
-	if (bShowDebug)
-	{
-		StaDebug::Print(FString::Printf(TEXT("%s Activate Ability"), *GetName()));
-	}
-	
 	if (!CardData || !CardData->CardEffectClass) return;
 
 	FGameplayEffectSpecHandle CardEffectHandle = MakeOutgoingGameplayEffectSpec(CardData->CardEffectClass);

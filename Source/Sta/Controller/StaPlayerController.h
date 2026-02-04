@@ -3,14 +3,30 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "InputTriggers.h"
 #include "GameFramework/PlayerController.h"
+#include "GameplayTag/StaTags.h"
 #include "StaPlayerController.generated.h"
 
 
+struct FInteractOption;
+struct FCardInfo;
+class UCardData;
 struct FGameplayEventData;
 struct FGameplayTag;
 class UInputMappingContext;
+
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnControllerStateChanged, FGameplayTag BeforeState, FGameplayTag AfterState, const TArray<FInteractOption>& NewOptions);
+
+UENUM(BlueprintType)
+enum class EInputPriority : uint8
+{
+	Character = 0,
+	Controller = 1,
+
+	Unknown UMETA(Hidden)
+};
 
 USTRUCT(BlueprintType)
 struct FInputActionConfig
@@ -37,7 +53,15 @@ class STA_API AStaPlayerController : public APlayerController
 public:
 	AStaPlayerController();
 
-	void ActiveGameplayEvent(FGameplayTag GameplayTag, const FGameplayEventData* EventData);
+	void TriggerGameplayEvent(FGameplayTag GameplayTag, const FGameplayEventData* EventData);
+
+	UFUNCTION(Client, Reliable)
+	void ClientDrawCard(const UCardData* DrawCardData);
+
+	UFUNCTION(Client, Reliable)
+	void ClientDiscardCard(const UCardData* RemoveCardData);
+
+	FOnControllerStateChanged OnControllerStateChanged;
 
 protected:
 	virtual void BeginPlay() override;
@@ -47,6 +71,9 @@ protected:
 	virtual void OnPossess(APawn* InPawn) override;
 
 	virtual void UpdateHoveredActor();
+
+	UFUNCTION(Server, Reliable)
+	void ServerInitDeck(const TArray<FCardInfo>& DeckList);
 
 	virtual void OnRep_Pawn() override;
 	virtual void OnRep_PlayerState() override;
@@ -72,6 +99,9 @@ protected:
 
 private:
 	void TryBindingHUD();
+	void TryInitDeckList();
+
+	void SetControllerState(FGameplayTag NewStateTag, const TArray<FInteractOption>& NewOptions = TArray<FInteractOption>());
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Input")
 	UInputMappingContext* MappingContext;
@@ -83,5 +113,8 @@ private:
 	float EdgeSensitive = 50.0f;
 
 	bool bHUDBounding = false;
+	bool bInitDeckList = false;
+
+	FGameplayTag StateTag = StaTags::State::Idle;
 	
 };

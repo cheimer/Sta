@@ -3,14 +3,28 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "UObject/Interface.h"
 #include "Interactable.generated.h"
 
 // This class does not need to be modified.
-UINTERFACE()
+UINTERFACE(BlueprintType)
 class UInteractable : public UInterface
 {
 	GENERATED_BODY()
+};
+
+USTRUCT()
+struct FInteractOption
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	FText DisplayName;
+
+	UPROPERTY(EditAnywhere, Meta = (Categories = "Interaction"))
+	FGameplayTag InteractTag;
+
 };
 
 /**
@@ -26,6 +40,8 @@ public:
 	virtual void OnInteractBegin(const FHitResult& HitResult) = 0;
 	virtual void OnInteracting(const FHitResult& HitResult) = 0;
 	virtual void OnInteractEnd(const FHitResult& HitResult) = 0;
+	virtual const TArray<FInteractOption>& GetInteractOptions() = 0;
+	
 	virtual bool CanInteract() const { return true; }
 	
 };

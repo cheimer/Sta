@@ -6,6 +6,7 @@
 #include "Sta.h"
 #include "AbilitySystem/StaAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSet/AreaAttributeSet.h"
+#include "GameplayTag/StaTags.h"
 #include "Helper/StaHelper.h"
 
 
@@ -36,6 +37,27 @@ AAreaBase::AAreaBase()
 void AAreaBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	SetInteractOptions();
+}
+
+void AAreaBase::SetInteractOptions()
+{
+	FInteractOption InfoOption;
+	InfoOption.DisplayName = FText::FromString("Info");
+	InfoOption.InteractTag = StaTags::Interaction::Area::Info;
+	
+	FInteractOption MoveOption;
+	MoveOption.DisplayName = FText::FromString("Move");
+	MoveOption.InteractTag = StaTags::Interaction::Area::Move;
+	
+	FInteractOption CancelOption;
+	CancelOption.DisplayName = FText::FromString("Cancel");
+	CancelOption.InteractTag = StaTags::Interaction::Area::Cancel;
+
+	Options.Add(InfoOption);
+	Options.Add(MoveOption);
+	Options.Add(CancelOption);
 	
 }
 
@@ -62,6 +84,11 @@ void AAreaBase::OnInteracting(const FHitResult& HitResult)
 void AAreaBase::OnInteractEnd(const FHitResult& HitResult)
 {
 	StaDebug::Print("Area Interact End");
+}
+
+const TArray<FInteractOption>& AAreaBase::GetInteractOptions()
+{
+	return Options;
 }
 
 UAbilitySystemComponent* AAreaBase::GetAbilitySystemComponent() const

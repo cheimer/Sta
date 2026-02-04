@@ -6,12 +6,13 @@
 #include "AbilitySystemComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "AbilitySystem/StaAbilitySystemComponent.h"
+#include "Component/CardComponent.h"
+#include "Framework/GameMode/StaGameModeBase.h"
 #include "GameFramework/PlayerState.h"
-#include "GameplayTag/StaTags.h"
 #include "Helper/StaHelper.h"
 #include "Interface/Interactable.h"
 #include "Player/CommandPawn.h"
-#include "Type/StaEnum.h"
 #include "UI/StaHUD.h"
 
 AStaPlayerController::AStaPlayerController()
@@ -77,15 +78,47 @@ void AStaPlayerController::OnPossess(APawn* InPawn)
 	}
 }
 
-void AStaPlayerController::ActiveGameplayEvent(FGameplayTag GameplayTag, const FGameplayEventData* EventData)
+void AStaPlayerController::TriggerGameplayEvent(FGameplayTag GameplayTag, const FGameplayEventData* EventData)
 {
 	const IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(GetPawn());
 	if (!AbilityInterface) return;
 
 	UAbilitySystemComponent* PawnASC = AbilityInterface->GetAbilitySystemComponent();
 	if (!PawnASC) return;
+
+	if (HasAuthority())
+	{
+		PawnASC->HandleGameplayEvent(GameplayTag, EventData);
+	}
+	else
+	{
+		if (UStaAbilitySystemComponent* PawnStaASC = Cast<UStaAbilitySystemComponent>(PawnASC))
+		{
+			PawnStaASC->ServerHandleGameplayEvent(GameplayTag, *EventData);
+		}
+	}
 	
-	PawnASC->HandleGameplayEvent(GameplayTag, EventData);
+}
+
+void AStaPlayerController::ClientDrawCard_Implementation(const UCardData* DrawCardData)
+{
+	if (!DrawCardData || !GetPawn()) return;
+    
+	UCardComponent* CardComp = GetPawn()->FindComponentByClass<UCardComponent>();
+	if (!CardComp) return;
+    
+	CardComp->AddCardToHand(DrawCardData);
+    
+}
+
+void AStaPlayerController::ClientDiscardCard_Implementation(const UCardData* RemoveCardData)
+{
+	if (!RemoveCardData || !GetPawn()) return;
+    
+	UCardComponent* CardComp = GetPawn()->FindComponentByClass<UCardComponent>();
+	if (!CardComp) return;
+
+	CardComp->RemoveCardFromHand(RemoveCardData);
 }
 
 void AStaPlayerController::UpdateHoveredActor()
@@ -131,6 +164,7 @@ void AStaPlayerController::OnRep_Pawn()
 	Super::OnRep_Pawn();
 
 	TryBindingHUD();
+	TryInitDeckList();
 	
 }
 
@@ -139,6 +173,7 @@ void AStaPlayerController::OnRep_PlayerState()
 	Super::OnRep_PlayerState();
 
 	TryBindingHUD();
+	TryInitDeckList();
 }
 
 void AStaPlayerController::TryBindingHUD()
@@ -163,6 +198,40 @@ void AStaPlayerController::TryBindingHUD()
 	
 }
 
+void AStaPlayerController::TryInitDeckList()
+{
+	if (!IsLocalController()) return;
+
+	if (bInitDeckList) return;
+
+	if (!GetPawn() || !PlayerState) return;
+
+	UCardComponent* CardComp = GetPawn()->FindComponentByClass<UCardComponent>();
+	if (!CardComp) return;
+
+	TArray<FCardInfo> DeckList = CardComp->GetDeckList();
+	if (DeckList.Num() == 0) return;
+
+	ServerInitDeck(DeckList);
+	bInitDeckList = true;
+}
+
+void AStaPlayerController::ServerInitDeck_Implementation(const TArray<FCardInfo>& DeckList)
+{
+	if (!GetWorld() || DeckList.Num() == 0) return;
+
+	AStaGameModeBase* GameMode = Cast<AStaGameModeBase>(GetWorld()->GetAuthGameMode());
+	if (!GameMode) return;
+
+	GameMode->InitDeckState(DeckList, this);
+}
+
+void AStaPlayerController::SetControllerState(FGameplayTag NewStateTag, const TArray<FInteractOption>& NewOptions)
+{
+	OnControllerStateChanged.Broadcast(StateTag, NewStateTag, NewOptions);
+	StateTag = NewStateTag;
+}
+
 /////////////////////
 /// Input Actions
 /////////////////////
@@ -171,11 +240,19 @@ void AStaPlayerController::InteractBegin(const FInputActionValue& Value)
 {
 	if (IInteractable* InteractableActor = Cast<IInteractable>(HoveredActor))
 	{
+		const TArray<FInteractOption>& Options = InteractableActor->GetInteractOptions();
+		if (Options.IsEmpty()) return;
+		
 		FHitResult HitResult;
 		GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
 	
 		InteractableActor->OnInteractBegin(HitResult);
 		bIsInteracting = true;
+		
+		if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Card_Root))
+		{
+			SetControllerState(StaTags::State::Drag, Options);
+		}
 	}
 	
 }
@@ -195,17 +272,35 @@ void AStaPlayerController::InteractEnd(const FInputActionValue& Value)
 {
 	if (IInteractable* InteractableActor = Cast<IInteractable>(HoveredActor))
 	{
+		const TArray<FInteractOption>& Options = InteractableActor->GetInteractOptions();
+		if (Options.IsEmpty()) return;
+		
 		FHitResult HitResult;
 		GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
 	
 		InteractableActor->OnInteractEnd(HitResult);
 		bIsInteracting = false;
+
+		if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Card_Root))
+		{
+			SetControllerState(StaTags::State::Idle, Options);
+		}
+		else if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Area_Root))
+		{
+			SetControllerState(StaTags::State::Menu, Options);
+		}
+	}
+	else
+	{
+		SetControllerState(StaTags::State::Idle);
 	}
 }
 
 void AStaPlayerController::Cancel(const FInputActionValue& Value)
 {
-	StaDebug::Print("Cancel Func");
+	if (bIsInteracting) return;
+	
+	SetControllerState(StaTags::State::Idle);
 }
 
 void AStaPlayerController::Scroll(const FInputActionValue& Value)

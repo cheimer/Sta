@@ -55,6 +55,7 @@ void UPlayerAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCall
 		if (GetChargeTime() != AdjustValue)
 		{
 			SetChargeTime(AdjustValue);
+			OnChargeComplete.Broadcast();
 		}
 	}
 }
