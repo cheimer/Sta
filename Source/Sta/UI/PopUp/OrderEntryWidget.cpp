@@ -8,8 +8,11 @@
 
 void UOrderEntryWidget::SetOrderText(const FText& InOrderText)
 {
-	OrderText->SetText(InOrderText);
-	OrderText->SetVisibility(ESlateVisibility::HitTestInvisible);
+	if (OrderText)
+	{
+		OrderText->SetText(InOrderText);
+		OrderText->SetVisibility(ESlateVisibility::HitTestInvisible);
+	}
 }
 
 void UOrderEntryWidget::SetOrderButton(TFunction<void()> InReleaseCallback)
@@ -21,7 +24,10 @@ void UOrderEntryWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	OrderButton->OnReleased.AddDynamic(this, &ThisClass::HandleButtonReleased);
+	if (OrderButton)
+	{
+		OrderButton->OnReleased.AddDynamic(this, &ThisClass::HandleButtonReleased);
+	}
 }
 
 void UOrderEntryWidget::HandleButtonReleased()

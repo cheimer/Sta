@@ -19,15 +19,16 @@ class STA_API AAreaBase : public AActor, public IInteractable, public IAbilitySy
 public:
 	AAreaBase();
 
-/**
- * IInteractable
- */
+	/**
+	* IInteractable
+	*/
 	virtual void OnHoverBegin() override;
 	virtual void OnHoverEnd() override;
 	virtual void OnInteractBegin(const FHitResult& HitResult) override;
 	virtual void OnInteracting(const FHitResult& HitResult) override;
 	virtual void OnInteractEnd(const FHitResult& HitResult) override;
 	virtual const TArray<FInteractOption>& GetInteractOptions() override;
+	virtual FText GetInfoText() override;
 
 	/**
 	 * AbilitySystemInterface

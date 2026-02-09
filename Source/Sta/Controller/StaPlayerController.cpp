@@ -281,11 +281,11 @@ void AStaPlayerController::InteractEnd(const FInputActionValue& Value)
 		InteractableActor->OnInteractEnd(HitResult);
 		bIsInteracting = false;
 
-		if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Card_Root))
+		if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Card_Root) && StateTag.MatchesTag(StaTags::State::Drag))
 		{
 			SetControllerState(StaTags::State::Idle, Options);
 		}
-		else if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Area_Root))
+		else if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Area_Root) && StateTag.MatchesTagExact(StaTags::State::Idle))
 		{
 			SetControllerState(StaTags::State::Menu, Options);
 		}
@@ -299,8 +299,8 @@ void AStaPlayerController::InteractEnd(const FInputActionValue& Value)
 void AStaPlayerController::Cancel(const FInputActionValue& Value)
 {
 	if (bIsInteracting) return;
-	
-	SetControllerState(StaTags::State::Idle);
+
+	OnControllerCanceled.Broadcast();
 }
 
 void AStaPlayerController::Scroll(const FInputActionValue& Value)

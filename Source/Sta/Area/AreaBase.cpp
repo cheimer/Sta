@@ -46,14 +46,17 @@ void AAreaBase::SetInteractOptions()
 	FInteractOption InfoOption;
 	InfoOption.DisplayName = FText::FromString("Info");
 	InfoOption.InteractTag = StaTags::Interaction::Area::Info;
+	InfoOption.TargetActor = this;
 	
 	FInteractOption MoveOption;
 	MoveOption.DisplayName = FText::FromString("Move");
 	MoveOption.InteractTag = StaTags::Interaction::Area::Move;
+	InfoOption.TargetActor = this;
 	
 	FInteractOption CancelOption;
 	CancelOption.DisplayName = FText::FromString("Cancel");
 	CancelOption.InteractTag = StaTags::Interaction::Area::Cancel;
+	InfoOption.TargetActor = this;
 
 	Options.Add(InfoOption);
 	Options.Add(MoveOption);
@@ -89,6 +92,17 @@ void AAreaBase::OnInteractEnd(const FHitResult& HitResult)
 const TArray<FInteractOption>& AAreaBase::GetInteractOptions()
 {
 	return Options;
+}
+
+FText AAreaBase::GetInfoText()
+{
+	if (Options.IsEmpty()) return FText();
+	if (!GetAttributeSet()) return FText();
+	
+	FText InfoText = FText::FromString(FString::Printf(TEXT("%s\nUnit : %d\nDefense : %d"),
+		*GetName(), FMath::FloorToInt(GetAttributeSet()->GetUnitNum()), FMath::FloorToInt(GetAttributeSet()->GetDefense())));
+	
+	return InfoText;
 }
 
 UAbilitySystemComponent* AAreaBase::GetAbilitySystemComponent() const

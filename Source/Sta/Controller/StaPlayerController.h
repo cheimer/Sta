@@ -18,6 +18,7 @@ struct FGameplayTag;
 class UInputMappingContext;
 
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnControllerStateChanged, FGameplayTag BeforeState, FGameplayTag AfterState, const TArray<FInteractOption>& NewOptions);
+DECLARE_MULTICAST_DELEGATE(FOnControllerCanceled);
 
 UENUM(BlueprintType)
 enum class EInputPriority : uint8
@@ -61,7 +62,10 @@ public:
 	UFUNCTION(Client, Reliable)
 	void ClientDiscardCard(const UCardData* RemoveCardData);
 
+	void SetControllerState(FGameplayTag NewStateTag, const TArray<FInteractOption>& NewOptions = TArray<FInteractOption>());
+	
 	FOnControllerStateChanged OnControllerStateChanged;
+	FOnControllerCanceled OnControllerCanceled;
 
 protected:
 	virtual void BeginPlay() override;
@@ -101,8 +105,6 @@ private:
 	void TryBindingHUD();
 	void TryInitDeckList();
 
-	void SetControllerState(FGameplayTag NewStateTag, const TArray<FInteractOption>& NewOptions = TArray<FInteractOption>());
-	
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Input")
 	UInputMappingContext* MappingContext;
 	

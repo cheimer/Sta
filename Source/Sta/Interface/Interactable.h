@@ -25,6 +25,8 @@ struct FInteractOption
 	UPROPERTY(EditAnywhere, Meta = (Categories = "Interaction"))
 	FGameplayTag InteractTag;
 
+	TWeakObjectPtr<AActor> TargetActor;
+
 };
 
 /**
@@ -43,5 +45,6 @@ public:
 	virtual const TArray<FInteractOption>& GetInteractOptions() = 0;
 	
 	virtual bool CanInteract() const { return true; }
+	virtual FText GetInfoText() { return FText(); }
 	
 };

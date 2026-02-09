@@ -4,9 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
+#include "Interface/Interactable.h"
 #include "StaHUD.generated.h"
 
-struct FInteractOption;
+class UPopUpWidget;
 struct FGameplayTag;
 class UOrderListWidget;
 class UPlayerAttributeSet;
@@ -31,16 +32,19 @@ public:
 	void OnDrawButtonClicked();
 
 	void HandleControllerStateChanged(FGameplayTag BeforeState, FGameplayTag AfterState, const TArray<FInteractOption>& NewOptions);
+	void HandleControllerCanceled();
 
 protected:
 	void OnCostChanged(const FOnAttributeChangeData& ChangedData);
 	void OnDrawChargeChanged(const FOnAttributeChangeData& ChangedData);
+
+	void HandleOrderSelected(FGameplayTag SelectedTag);
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Widget")
 	TSubclassOf<UPlayWidget> MainWidgetClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Widget")
-	TSubclassOf<UOrderListWidget> AreaOrderWidgetClass;
+	TSubclassOf<UPopUpWidget> AreaOrderWidgetClass;
 
 	UPROPERTY(Transient)
 	UPlayWidget* CurrentWidget;
