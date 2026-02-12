@@ -3,10 +3,12 @@
 
 #include "StaPlayerController.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "AbilitySystem/StaAbilitySystemComponent.h"
+#include "Area/AreaBase.h"
 #include "Component/CardComponent.h"
 #include "Framework/GameMode/StaGameModeBase.h"
 #include "GameFramework/PlayerState.h"
@@ -232,27 +234,64 @@ void AStaPlayerController::SetControllerState(FGameplayTag NewStateTag, const TA
 	StateTag = NewStateTag;
 }
 
+void AStaPlayerController::SetControllerIdle()
+{
+	SetControllerState(StaTags::State::Idle);
+}
+
+void AStaPlayerController::SetControllerTargeting()
+{
+	SetControllerState(StaTags::State::Targeting);
+
+	if (!RecentInteractActor.IsValid()) return;
+	
+	SetConnectedAreasHighlight(RecentInteractActor.Get(), true);
+}
+
+void AStaPlayerController::SetConnectedAreasHighlight(AActor* RootArea, const bool bIsHighlight)
+{
+	if (AAreaBase* InteractedArea = Cast<AAreaBase>(RootArea))
+	{
+		TArray<AAreaBase*> ConnectedAreas = InteractedArea->GetConnectedArea();
+		for (AAreaBase* ConnectedArea : ConnectedAreas)
+		{
+			ConnectedArea->SetHighlight(bIsHighlight);
+		}
+	}
+}
+
 /////////////////////
 /// Input Actions
 /////////////////////
 
 void AStaPlayerController::InteractBegin(const FInputActionValue& Value)
 {
-	if (IInteractable* InteractableActor = Cast<IInteractable>(HoveredActor))
+	IInteractable* InteractableActor = Cast<IInteractable>(HoveredActor);
+	if (!InteractableActor) return;
+	
+	FHitResult HitResult;
+	GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
+
+	bIsInteracting = true;
+	
+	if (StateTag == StaTags::State::Targeting)
+	{
+		//
+	}
+	else
 	{
 		const TArray<FInteractOption>& Options = InteractableActor->GetInteractOptions();
 		if (Options.IsEmpty()) return;
-		
-		FHitResult HitResult;
-		GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
 	
 		InteractableActor->OnInteractBegin(HitResult);
-		bIsInteracting = true;
-		
+
 		if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Card_Root))
 		{
 			SetControllerState(StaTags::State::Drag, Options);
 		}
+
+		RecentInteractActor = HoveredActor;
+		
 	}
 	
 }
@@ -270,18 +309,49 @@ void AStaPlayerController::Interacting(const FInputActionValue& Value)
 
 void AStaPlayerController::InteractEnd(const FInputActionValue& Value)
 {
-	if (IInteractable* InteractableActor = Cast<IInteractable>(HoveredActor))
+	IInteractable* InteractableActor = Cast<IInteractable>(HoveredActor);
+	if (!InteractableActor) return;
+	
+	FHitResult HitResult;
+	GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
+
+	bIsInteracting = false;
+	
+	if (StateTag == StaTags::State::Targeting)
+	{
+		AAreaBase* HoveredArea = Cast<AAreaBase>(HoveredActor);
+		if (!RecentInteractActor.IsValid() || !HoveredArea) return;
+
+		bool bIsCorrectArea = false;
+		TArray<AAreaBase*> HoveredConnectedAreas = HoveredArea->GetConnectedArea();
+		for (AAreaBase* HoveredConnectedArea : HoveredConnectedAreas)
+		{
+			if (HoveredConnectedArea == RecentInteractActor.Get())
+			{
+				bIsCorrectArea = true;
+				break;
+			}
+		}
+
+		if (!bIsCorrectArea) return;
+
+		UAbilitySystemComponent* InteractActorASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(RecentInteractActor.Get());
+		if (!InteractActorASC) return;
+
+		StaDebug::Print(FString::Printf(TEXT("%s : Add Ability In Area"), *InteractActorASC->GetName()));
+		
+		SetConnectedAreasHighlight(RecentInteractActor.Get(), false);
+
+		SetControllerIdle();
+	}
+	else
 	{
 		const TArray<FInteractOption>& Options = InteractableActor->GetInteractOptions();
 		if (Options.IsEmpty()) return;
-		
-		FHitResult HitResult;
-		GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
 	
 		InteractableActor->OnInteractEnd(HitResult);
-		bIsInteracting = false;
 
-		if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Card_Root) && StateTag.MatchesTag(StaTags::State::Drag))
+		if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Card_Root) && StateTag.MatchesTagExact(StaTags::State::Drag))
 		{
 			SetControllerState(StaTags::State::Idle, Options);
 		}
@@ -289,10 +359,7 @@ void AStaPlayerController::InteractEnd(const FInputActionValue& Value)
 		{
 			SetControllerState(StaTags::State::Menu, Options);
 		}
-	}
-	else
-	{
-		SetControllerState(StaTags::State::Idle);
+		
 	}
 }
 
@@ -301,6 +368,16 @@ void AStaPlayerController::Cancel(const FInputActionValue& Value)
 	if (bIsInteracting) return;
 
 	OnControllerCanceled.Broadcast();
+
+	if (StateTag == StaTags::State::Targeting)
+	{
+		SetControllerState(StaTags::State::Idle);
+
+		if (RecentInteractActor.IsValid())
+		{
+			SetConnectedAreasHighlight(RecentInteractActor.Get(), false);
+		}
+	}
 }
 
 void AStaPlayerController::Scroll(const FInputActionValue& Value)

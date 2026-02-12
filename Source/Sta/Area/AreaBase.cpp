@@ -3,6 +3,9 @@
 
 #include "AreaBase.h"
 
+#include "LineBase.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Sta.h"
 #include "AbilitySystem/StaAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSet/AreaAttributeSet.h"
@@ -28,9 +31,6 @@ AAreaBase::AAreaBase()
 	AreaMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	AreaMesh->SetCollisionObjectType(ECC_Area);
 	AreaMesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-	
-	AreaMesh->SetCastShadow(false);
-	
 
 }
 
@@ -39,6 +39,7 @@ void AAreaBase::BeginPlay()
 	Super::BeginPlay();
 
 	SetInteractOptions();
+	
 }
 
 void AAreaBase::SetInteractOptions()
@@ -61,6 +62,43 @@ void AAreaBase::SetInteractOptions()
 	Options.Add(InfoOption);
 	Options.Add(MoveOption);
 	Options.Add(CancelOption);
+	
+}
+
+void AAreaBase::AddLine(ALineBase* Line)
+{
+	ConnectLines.Add(Line);
+}
+
+TArray<AAreaBase*> AAreaBase::GetConnectedArea()
+{
+	TArray<AAreaBase*> ConnectedAreas;
+
+	for(ALineBase* ConnectLine : ConnectLines)
+	{
+		if (AAreaBase* OtherArea = ConnectLine->GetConnectArea(this))
+		{
+			ConnectedAreas.Add(OtherArea);
+		}
+	}
+
+	return ConnectedAreas;
+}
+
+void AAreaBase::SetHighlight(bool bIsHighlight)
+{
+	if (bIsHighlight)
+	{
+		SpawnedHighlight = UNiagaraFunctionLibrary::SpawnSystemAttached(HighlightVFX, AreaMesh, NAME_None,
+			HighlightSpawnLocation, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+	}
+	else
+	{
+		if (SpawnedHighlight)
+		{
+			SpawnedHighlight->DeactivateImmediate();
+		}
+	}
 	
 }
 

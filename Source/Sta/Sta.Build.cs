@@ -21,7 +21,9 @@ public class Sta : ModuleRules
 			"GameplayTasks",
 			
 			"UMG",
-			"CommonUI"
+			"CommonUI",
+			
+			"Niagara"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

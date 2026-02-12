@@ -8,6 +8,9 @@
 #include "Interface/Interactable.h"
 #include "AreaBase.generated.h"
 
+class UNiagaraComponent;
+class UNiagaraSystem;
+class ALineBase;
 class UAreaAttributeSet;
 class UCapsuleComponent;
 
@@ -18,6 +21,12 @@ class STA_API AAreaBase : public AActor, public IInteractable, public IAbilitySy
 
 public:
 	AAreaBase();
+
+	void AddLine(ALineBase* Line);
+
+	TArray<AAreaBase*> GetConnectedArea();
+
+	void SetHighlight(bool bIsHighlight);
 
 	/**
 	* IInteractable
@@ -52,9 +61,21 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Component")
 	UStaticMeshComponent* AreaMesh;
 
+	UPROPERTY(EditAnywhere, Category = "VFX")
+	UNiagaraSystem* HighlightVFX;
+
+	UPROPERTY(EditAnywhere, Category = "VFX")
+	FVector HighlightSpawnLocation = FVector(0.0f, 0.0f, 30.0f);
+
 private:
 	void SetInteractOptions();
 	
 	TArray<FInteractOption> Options;
+
+	UPROPERTY()
+	TArray<TObjectPtr<ALineBase>> ConnectLines;
+
+	UPROPERTY(Transient)
+	UNiagaraComponent* SpawnedHighlight;
 	
 };

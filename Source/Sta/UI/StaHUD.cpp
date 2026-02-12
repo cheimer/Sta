@@ -108,7 +108,7 @@ void AStaHUD::HandleControllerCanceled()
 		
 	if (MenuWidgets.IsEmpty())
 	{
-		PlayerController->SetControllerState(StaTags::State::Idle);
+		PlayerController->SetControllerIdle();
 	}
 	else
 	{
@@ -128,7 +128,7 @@ void AStaHUD::HandleOrderSelected(FGameplayTag SelectedTag)
 		
 		if (MenuWidgets.IsEmpty())
 		{
-			PlayerController->SetControllerState(StaTags::State::Idle);
+			PlayerController->SetControllerIdle();
 		}
 		else
 		{
@@ -155,11 +155,17 @@ void AStaHUD::HandleOrderSelected(FGameplayTag SelectedTag)
 			}
 
 		}
-		
 	}
 	else if (SelectedTag.MatchesTagExact(StaTags::Interaction::Area::Move))
 	{
-		StaDebug::Print(TEXT("Move"));
+		while (!MenuWidgets.IsEmpty())
+		{
+			UUserWidget* PopWidget = MenuWidgets.Pop();
+			PopWidget->RemoveFromParent();
+		}
+		
+		PlayerController->SetControllerTargeting();
+		
 	}
 	else
 	{
