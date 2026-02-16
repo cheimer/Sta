@@ -36,6 +36,8 @@ class STA_API AStaGameModeBase : public AGameModeBase
 
 public:
 	AStaGameModeBase();
+	
+	virtual void PostLogin(APlayerController* NewPlayer) override;
 
 	void InitDeckState(const TArray<FCardInfo>& DeckList, APlayerController* PC);
 	
@@ -44,6 +46,9 @@ public:
 
 	void DrawCard(APlayerController* PC);
 	void DiscardCard(APlayerController* PC, const UCardData* CardData);
+
+protected:
+	virtual void BeginPlay() override;
 
 private:
 	void ShuffleDeck(TArray<TObjectPtr<const UCardData>>& Cards);
@@ -56,5 +61,7 @@ private:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Value")
 	int32 MaxCardNum = 8;
+
+	int32 CurrentTeamNum = 0;
 
 };

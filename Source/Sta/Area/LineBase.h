@@ -24,7 +24,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Component")
 	UStaticMeshComponent* LineMesh;
 
-	UPROPERTY(EditInstanceOnly, Category = "Object")
+	UPROPERTY(EditInstanceOnly, Category = "Value")
 	TArray<TObjectPtr<AAreaBase>> NodeAreas;
+
+	UPROPERTY(EditInstanceOnly, Category = "Value")
+	float MoveTime = -1.0f;
 
 };

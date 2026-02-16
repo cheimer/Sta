@@ -4,12 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "GenericTeamAgentInterface.h"
 #include "InputTriggers.h"
 #include "GameFramework/PlayerController.h"
 #include "GameplayTag/StaTags.h"
 #include "StaPlayerController.generated.h"
 
 
+class AAreaBase;
 struct FInteractOption;
 struct FCardInfo;
 class UCardData;
@@ -47,23 +49,40 @@ struct FInputActionConfig
 
 
 UCLASS()
-class STA_API AStaPlayerController : public APlayerController
+class STA_API AStaPlayerController : public APlayerController, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
 public:
 	AStaPlayerController();
 
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;;
+
 	void SetControllerIdle();
 	void SetControllerTargeting();
 
 	void TriggerGameplayEvent(FGameplayTag GameplayTag, const FGameplayEventData* EventData);
+	
+	UFUNCTION(Server, Reliable)
+	void ServerTriggerGameplayEvent(FGameplayTag GameplayTag, const FGameplayEventData& EventData);
 
 	UFUNCTION(Client, Reliable)
 	void ClientDrawCard(const UCardData* DrawCardData);
 
 	UFUNCTION(Client, Reliable)
 	void ClientDiscardCard(const UCardData* RemoveCardData);
+
+	UFUNCTION(Reliable, Client)
+	void ClientAreaValueChanged(AAreaBase* AreaActor, const float UnitValue, const float DefenseValue);
+
+	/**
+	 * GenericTeamAgentInterface
+	 */
+	virtual void SetGenericTeamId(const FGenericTeamId& TeamID) override;
+	virtual FGenericTeamId GetGenericTeamId() const override;
+	/**
+	 * ~GenericTeamAgentInterface
+	 */
 
 	FOnControllerStateChanged OnControllerStateChanged;
 	FOnControllerCanceled OnControllerCanceled;
@@ -84,7 +103,8 @@ protected:
 
 	virtual void OnRep_Pawn() override;
 	virtual void OnRep_PlayerState() override;
-	
+
+#pragma region InputAction
 	UFUNCTION()
 	void InteractBegin(const FInputActionValue& Value);
 	UFUNCTION()
@@ -98,7 +118,8 @@ protected:
 	UFUNCTION()
 	void Move(const FInputActionValue& Value);
 	void EdgeScroll();
-
+#pragma endregion InputAction
+	
 	UPROPERTY()
 	TWeakObjectPtr<AActor> HoveredActor;
 	
@@ -125,6 +146,9 @@ private:
 	bool bHUDBounding = false;
 	bool bInitDeckList = false;
 
-	FGameplayTag StateTag = StaTags::State::Idle;
+	FGameplayTag StateTag = StaTags::State::Controller::Idle;
+
+	UPROPERTY(Replicated)
+	FGenericTeamId PlayerTeamID;
 	
 };

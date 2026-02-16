@@ -23,10 +23,12 @@ public class Sta : ModuleRules
 			"UMG",
 			"CommonUI",
 			
-			"Niagara"
+			"Niagara",
+			
+			"AIModule"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] {  });
+		PrivateDependencyModuleNames.AddRange(new string[] { });
 		
 		PublicIncludePaths.Add(ModuleDirectory);
 

@@ -33,7 +33,6 @@ void AStaPlayerState::BeginPlay()
 
 	if (HasAuthority())
 	{
-		
 		if (GetAttributeSet())
 		{
 			GetAttributeSet()->OnChargeComplete.AddUObject(this, &ThisClass::HandleChargeComplete);
@@ -84,6 +83,14 @@ void AStaPlayerState::HandleChargeComplete()
 {
 	if (!GetAbilitySystemComponent() || !GetPlayerController()) return;
 
+	float CurrentTime = GetWorld()->GetTimeSeconds();
+	if(CurrentTime - RecentChargeDrawTime < 0.1f)
+	{
+		return;
+	}
+	
+	RecentChargeDrawTime = CurrentTime;
+	
 	FGameplayEventData EventData;
 	EventData.Target = GetPlayerController()->GetPawn();
 	

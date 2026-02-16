@@ -4,18 +4,23 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "GenericTeamAgentInterface.h"
 #include "GameFramework/Actor.h"
 #include "Interface/Interactable.h"
 #include "AreaBase.generated.h"
 
+struct FOnAttributeChangeData;
 class UNiagaraComponent;
 class UNiagaraSystem;
 class ALineBase;
 class UAreaAttributeSet;
 class UCapsuleComponent;
+class AAreaBase;
+
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnAreaValueChanged, AAreaBase* AreaActor, const float UnitValue, const float DefenseValue);
 
 UCLASS()
-class STA_API AAreaBase : public AActor, public IInteractable, public IAbilitySystemInterface
+class STA_API AAreaBase : public AActor, public IInteractable, public IAbilitySystemInterface, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -27,6 +32,8 @@ public:
 	TArray<AAreaBase*> GetConnectedArea();
 
 	void SetHighlight(bool bIsHighlight);
+
+	FOnAreaValueChanged OnAreaValueChanged;
 
 	/**
 	* IInteractable
@@ -43,11 +50,19 @@ public:
 	 * AbilitySystemInterface
 	 */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	
 	UAreaAttributeSet* GetAttributeSet() const;
+
+	/**
+	 * GenericTeamAgentInterface
+	 */
+	virtual void SetGenericTeamId(const FGenericTeamId& TeamID) override;
+	virtual FGenericTeamId GetGenericTeamId() const override;
 
 protected:
 	virtual void BeginPlay() override;
+
+	void OnUnitNumChanged(const FOnAttributeChangeData& Data);
+	void OnDefenseChanged(const FOnAttributeChangeData& Data);
 
 	UPROPERTY()
 	TObjectPtr<APlayerState> OwningActor = nullptr;
@@ -77,5 +92,7 @@ private:
 
 	UPROPERTY(Transient)
 	UNiagaraComponent* SpawnedHighlight;
+
+	FGenericTeamId AreaTeamId;
 	
 };

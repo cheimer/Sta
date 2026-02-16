@@ -3,11 +3,13 @@
 
 #include "StaGameModeBase.h"
 
+#include "Area/AreaBase.h"
 #include "Controller/StaPlayerController.h"
 #include "Framework/GameState/StaGameState.h"
 #include "Player/CommandPawn.h"
 #include "Framework/PlayerState/StaPlayerState.h"
 #include "Helper/StaHelper.h"
+#include "Kismet/GameplayStatics.h"
 #include "UI/StaHUD.h"
 
 AStaGameModeBase::AStaGameModeBase()
@@ -18,6 +20,43 @@ AStaGameModeBase::AStaGameModeBase()
 	GameStateClass = AStaGameState::StaticClass();
 	PlayerStateClass = AStaPlayerState::StaticClass();
 	
+}
+
+void AStaGameModeBase::BeginPlay()
+{
+	Super::BeginPlay();
+
+	//TODO: Area Test Code
+	{
+		TArray<AActor*> FoundActors;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAreaBase::StaticClass(), FoundActors);
+
+		for (AActor* FoundActor : FoundActors)
+		{
+			if (AAreaBase* Area = Cast<AAreaBase>(FoundActor))
+			{
+				FGenericTeamId NewTeamId(CurrentTeamNum);
+				Area->SetGenericTeamId(NewTeamId);
+			}
+			
+		}
+	}
+	
+}
+
+void AStaGameModeBase::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+
+	if (IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(NewPlayer))
+	{
+		check(CurrentTeamNum < 255);
+		
+		FGenericTeamId NewTeamId(CurrentTeamNum);
+		TeamAgentInterface->SetGenericTeamId(NewTeamId);
+		//TODO: Area Test Code
+		//CurrentTeamNum++;
+	}
 }
 
 void AStaGameModeBase::InitDeckState(const TArray<FCardInfo>& DeckList, APlayerController* PC)

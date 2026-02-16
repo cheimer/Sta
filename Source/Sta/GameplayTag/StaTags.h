@@ -14,6 +14,7 @@ namespace StaTags
 		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cost);
 		UE_DECLARE_GAMEPLAY_TAG_EXTERN(UnitNum);
 		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Defense);
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Duration);
 	}
 	
 	namespace Ability
@@ -22,11 +23,8 @@ namespace StaTags
 		{
 			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Spell);
 			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Employ);
-		}
-		
-		namespace Area
-		{
-			
+			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Delayed);
+			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Deception);
 		}
 	}
 
@@ -37,6 +35,13 @@ namespace StaTags
 			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Draw);
 			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Use);
 			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Discard);
+		}
+		
+		namespace Area
+		{
+			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Move);
+			UE_DECLARE_GAMEPLAY_TAG_EXTERN(dispute);
+			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Captured);
 		}
 	}
 	
@@ -59,9 +64,17 @@ namespace StaTags
 	
 	namespace State
 	{
-		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Idle);
-		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Drag);
-		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Menu);
-		UE_DECLARE_GAMEPLAY_TAG_EXTERN(Targeting);
+		namespace Controller
+		{
+			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Idle);
+			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Drag);
+			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Menu);
+			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Targeting);
+		}
+
+		namespace Area
+		{
+			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Blocked);
+		}
 	}
 }

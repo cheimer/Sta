@@ -39,7 +39,40 @@ void AAreaBase::BeginPlay()
 	Super::BeginPlay();
 
 	SetInteractOptions();
+
+	if (HasAuthority() && GetAbilitySystemComponent())
+	{
+		GetAbilitySystemComponent()->GetGameplayAttributeValueChangeDelegate(
+		UAreaAttributeSet::GetUnitNumAttribute()).AddUObject(this, &ThisClass::OnUnitNumChanged);
+		
+		GetAbilitySystemComponent()->GetGameplayAttributeValueChangeDelegate(
+			UAreaAttributeSet::GetDefenseAttribute()).AddUObject(this, &ThisClass::OnDefenseChanged);
+	}
 	
+}
+
+void AAreaBase::OnUnitNumChanged(const FOnAttributeChangeData& Data)
+{
+	if (!HasAuthority()) return;
+
+	if (!GetAttributeSet()) return;
+
+	OnAreaValueChanged.Broadcast(this, Data.NewValue, GetAttributeSet()->GetDefense());
+	
+	//Send Unit Data To Owner Player
+	StaDebug::Print(FString::Printf(TEXT("%s : Before %.0f, After %.0f"), *GetNameSafe(this), Data.OldValue, Data.NewValue));
+}
+
+void AAreaBase::OnDefenseChanged(const FOnAttributeChangeData& Data)
+{
+	if (!HasAuthority()) return;
+	
+	if (!GetAttributeSet()) return;
+
+	OnAreaValueChanged.Broadcast(this, GetAttributeSet()->GetUnitNum(), Data.NewValue);
+	
+	//Send Unit Data To Owner Player
+	StaDebug::Print("Defense Change");
 }
 
 void AAreaBase::SetInteractOptions()
@@ -104,17 +137,17 @@ void AAreaBase::SetHighlight(bool bIsHighlight)
 
 void AAreaBase::OnHoverBegin()
 {
-	StaDebug::Print(FString::Printf(TEXT("Area Unit Num : %f"), GetAttributeSet()->GetUnitNum()));
+	StaDebug::Print(FString::Printf(TEXT("%u Area Unit Num : %f"), AreaTeamId.GetId(), GetAttributeSet()->GetUnitNum()));
 }
 
 void AAreaBase::OnHoverEnd()
 {
-	StaDebug::Print("Area Hover End");
+
 }
 
 void AAreaBase::OnInteractBegin(const FHitResult& HitResult)
 {
-	StaDebug::Print("Area Interact Begin");
+
 }
 
 void AAreaBase::OnInteracting(const FHitResult& HitResult)
@@ -124,7 +157,7 @@ void AAreaBase::OnInteracting(const FHitResult& HitResult)
 
 void AAreaBase::OnInteractEnd(const FHitResult& HitResult)
 {
-	StaDebug::Print("Area Interact End");
+
 }
 
 const TArray<FInteractOption>& AAreaBase::GetInteractOptions()
@@ -143,6 +176,9 @@ FText AAreaBase::GetInfoText()
 	return InfoText;
 }
 
+/**
+ * AbilitySystemInterface
+ */
 UAbilitySystemComponent* AAreaBase::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
@@ -151,4 +187,17 @@ UAbilitySystemComponent* AAreaBase::GetAbilitySystemComponent() const
 UAreaAttributeSet* AAreaBase::GetAttributeSet() const
 {
 	return AttributeSet;
+}
+
+/**
+ * GenericTeamAgentInterface
+ */
+void AAreaBase::SetGenericTeamId(const FGenericTeamId& TeamID)
+{
+	AreaTeamId = TeamID;
+}
+
+FGenericTeamId AAreaBase::GetGenericTeamId() const
+{
+	return AreaTeamId;
 }

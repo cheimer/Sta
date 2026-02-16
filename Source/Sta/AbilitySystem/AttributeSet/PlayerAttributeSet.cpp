@@ -21,12 +21,12 @@ void UPlayerAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimePrope
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, Cost, COND_OwnerOnly, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, MaxCost, COND_OwnerOnly, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION(ThisClass, Cost, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(ThisClass, MaxCost, COND_OwnerOnly);
 	
-	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, ChargeTime, COND_OwnerOnly, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, ChargeRate, COND_OwnerOnly, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(ThisClass, MaxCharge, COND_OwnerOnly, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION(ThisClass, ChargeTime, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(ThisClass, ChargeRate, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(ThisClass, MaxCharge, COND_OwnerOnly);
 	
 	
 }

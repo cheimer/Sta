@@ -13,18 +13,9 @@ ALineBase::ALineBase()
 	LineMesh = CreateDefaultSubobject<UStaticMeshComponent>("LineMesh");
 	SetRootComponent(LineMesh);
 	
+	LineMesh->SetMobility(EComponentMobility::Static);
 	LineMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	
-}
-
-AAreaBase* ALineBase::GetConnectArea(AAreaBase* InArea)
-{
-	if (!InArea || NodeAreas.Num() < 2 || !NodeAreas[0] || !NodeAreas[1]) return nullptr;
-
-	if (NodeAreas[0] == InArea) return NodeAreas[1];
-	if (NodeAreas[1] == InArea) return NodeAreas[0];
-
-	return nullptr;
 }
 
 void ALineBase::BeginPlay()
@@ -37,6 +28,23 @@ void ALineBase::BeginPlay()
 	{
 		NodeArea->AddLine(this);
 	}
+
+	if (MoveTime < 0)
+	{
+		FBoxSphereBounds LineBounds = LineMesh->CalcLocalBounds();
+
+		MoveTime = FMath::Max(LineBounds.BoxExtent.X, LineBounds.BoxExtent.Y, LineBounds.BoxExtent.Z) * 2.0f;
+		
+	}
 	
-	
+}
+
+AAreaBase* ALineBase::GetConnectArea(AAreaBase* InArea)
+{
+	if (!InArea || NodeAreas.Num() < 2 || !NodeAreas[0] || !NodeAreas[1]) return nullptr;
+
+	if (NodeAreas[0] == InArea) return NodeAreas[1];
+	if (NodeAreas[1] == InArea) return NodeAreas[0];
+
+	return nullptr;
 }

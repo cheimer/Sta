@@ -8,19 +8,29 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "AbilitySystem/StaAbilitySystemComponent.h"
+#include "AbilitySystem/AttributeSet/AreaAttributeSet.h"
 #include "Area/AreaBase.h"
 #include "Component/CardComponent.h"
 #include "Framework/GameMode/StaGameModeBase.h"
 #include "GameFramework/PlayerState.h"
 #include "Helper/StaHelper.h"
 #include "Interface/Interactable.h"
+#include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 #include "Player/CommandPawn.h"
 #include "UI/StaHUD.h"
 
 AStaPlayerController::AStaPlayerController()
 {
 	bShowMouseCursor = true;
+	PlayerTeamID = FGenericTeamId::NoTeam;
+}
 
+void AStaPlayerController::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ThisClass, PlayerTeamID);
 }
 
 void AStaPlayerController::BeginPlay()
@@ -94,12 +104,14 @@ void AStaPlayerController::TriggerGameplayEvent(FGameplayTag GameplayTag, const 
 	}
 	else
 	{
-		if (UStaAbilitySystemComponent* PawnStaASC = Cast<UStaAbilitySystemComponent>(PawnASC))
-		{
-			PawnStaASC->ServerHandleGameplayEvent(GameplayTag, *EventData);
-		}
+		ServerTriggerGameplayEvent(GameplayTag, *EventData);
 	}
 	
+}
+
+void AStaPlayerController::ServerTriggerGameplayEvent_Implementation(FGameplayTag GameplayTag, const FGameplayEventData& EventData)
+{
+	TriggerGameplayEvent(GameplayTag, &EventData);
 }
 
 void AStaPlayerController::ClientDrawCard_Implementation(const UCardData* DrawCardData)
@@ -121,6 +133,14 @@ void AStaPlayerController::ClientDiscardCard_Implementation(const UCardData* Rem
 	if (!CardComp) return;
 
 	CardComp->RemoveCardFromHand(RemoveCardData);
+}
+
+void AStaPlayerController::ClientAreaValueChanged_Implementation(AAreaBase* AreaActor, const float UnitValue, const float DefenseValue)
+{
+	if (!AreaActor || !AreaActor->GetAttributeSet()) return;
+
+	AreaActor->GetAttributeSet()->SetUnitNum(UnitValue);
+	AreaActor->GetAttributeSet()->SetDefense(DefenseValue);
 }
 
 void AStaPlayerController::UpdateHoveredActor()
@@ -236,12 +256,12 @@ void AStaPlayerController::SetControllerState(FGameplayTag NewStateTag, const TA
 
 void AStaPlayerController::SetControllerIdle()
 {
-	SetControllerState(StaTags::State::Idle);
+	SetControllerState(StaTags::State::Controller::Idle);
 }
 
 void AStaPlayerController::SetControllerTargeting()
 {
-	SetControllerState(StaTags::State::Targeting);
+	SetControllerState(StaTags::State::Controller::Targeting);
 
 	if (!RecentInteractActor.IsValid()) return;
 	
@@ -260,9 +280,22 @@ void AStaPlayerController::SetConnectedAreasHighlight(AActor* RootArea, const bo
 	}
 }
 
-/////////////////////
-/// Input Actions
-/////////////////////
+/**
+ * GenericTeamAgentInterface
+ */
+void AStaPlayerController::SetGenericTeamId(const FGenericTeamId& TeamID)
+{
+	PlayerTeamID = TeamID;
+}
+
+FGenericTeamId AStaPlayerController::GetGenericTeamId() const
+{
+	return PlayerTeamID;
+}
+
+/**
+ * Input Actions
+ */
 
 void AStaPlayerController::InteractBegin(const FInputActionValue& Value)
 {
@@ -274,7 +307,7 @@ void AStaPlayerController::InteractBegin(const FInputActionValue& Value)
 
 	bIsInteracting = true;
 	
-	if (StateTag == StaTags::State::Targeting)
+	if (StateTag == StaTags::State::Controller::Targeting)
 	{
 		//
 	}
@@ -287,7 +320,7 @@ void AStaPlayerController::InteractBegin(const FInputActionValue& Value)
 
 		if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Card_Root))
 		{
-			SetControllerState(StaTags::State::Drag, Options);
+			SetControllerState(StaTags::State::Controller::Drag, Options);
 		}
 
 		RecentInteractActor = HoveredActor;
@@ -317,7 +350,7 @@ void AStaPlayerController::InteractEnd(const FInputActionValue& Value)
 
 	bIsInteracting = false;
 	
-	if (StateTag == StaTags::State::Targeting)
+	if (StateTag == StaTags::State::Controller::Targeting)
 	{
 		AAreaBase* HoveredArea = Cast<AAreaBase>(HoveredActor);
 		if (!RecentInteractActor.IsValid() || !HoveredArea) return;
@@ -338,7 +371,17 @@ void AStaPlayerController::InteractEnd(const FInputActionValue& Value)
 		UAbilitySystemComponent* InteractActorASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(RecentInteractActor.Get());
 		if (!InteractActorASC) return;
 
-		StaDebug::Print(FString::Printf(TEXT("%s : Add Ability In Area"), *InteractActorASC->GetName()));
+		FGameplayEventData MoveEventData;
+		
+		FGameplayAbilityTargetData_ActorArray* AreaArray = new FGameplayAbilityTargetData_ActorArray();
+		AreaArray->TargetActorArray.Add(RecentInteractActor.Get());
+		AreaArray->TargetActorArray.Add(HoveredActor.Get());
+		
+		MoveEventData.TargetData.Add(AreaArray);
+		//TODO: Temp move all
+		MoveEventData.EventMagnitude = InteractActorASC->GetNumericAttribute(UAreaAttributeSet::GetUnitNumAttribute());
+		
+		TriggerGameplayEvent(StaTags::Event::Area::Move, &MoveEventData);
 		
 		SetConnectedAreasHighlight(RecentInteractActor.Get(), false);
 
@@ -351,13 +394,13 @@ void AStaPlayerController::InteractEnd(const FInputActionValue& Value)
 	
 		InteractableActor->OnInteractEnd(HitResult);
 
-		if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Card_Root) && StateTag.MatchesTagExact(StaTags::State::Drag))
+		if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Card_Root) && StateTag.MatchesTagExact(StaTags::State::Controller::Drag))
 		{
-			SetControllerState(StaTags::State::Idle, Options);
+			SetControllerState(StaTags::State::Controller::Idle, Options);
 		}
-		else if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Area_Root) && StateTag.MatchesTagExact(StaTags::State::Idle))
+		else if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Area_Root) && StateTag.MatchesTagExact(StaTags::State::Controller::Idle))
 		{
-			SetControllerState(StaTags::State::Menu, Options);
+			SetControllerState(StaTags::State::Controller::Menu, Options);
 		}
 		
 	}
@@ -369,9 +412,9 @@ void AStaPlayerController::Cancel(const FInputActionValue& Value)
 
 	OnControllerCanceled.Broadcast();
 
-	if (StateTag == StaTags::State::Targeting)
+	if (StateTag == StaTags::State::Controller::Targeting)
 	{
-		SetControllerState(StaTags::State::Idle);
+		SetControllerState(StaTags::State::Controller::Idle);
 
 		if (RecentInteractActor.IsValid())
 		{
@@ -442,9 +485,6 @@ void AStaPlayerController::EdgeScroll()
 	}
 
 	if (Direction.IsNearlyZero()) return;
-
-	if (!PlayerCameraManager) return;
-	FRotator CameraRotation = PlayerCameraManager->GetCameraRotation();
 
 	CommandPawn->MoveTo(Direction);
 }

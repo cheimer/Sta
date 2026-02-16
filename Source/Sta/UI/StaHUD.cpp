@@ -68,7 +68,7 @@ void AStaHUD::OnDrawButtonClicked()
 
 void AStaHUD::HandleControllerStateChanged(FGameplayTag BeforeState, FGameplayTag AfterState, const TArray<FInteractOption>& NewOptions)
 {
-	if (AfterState.MatchesTagExact(StaTags::State::Menu))
+	if (AfterState.MatchesTagExact(StaTags::State::Controller::Menu))
 	{
 		FVector2D WidgetLocation;
 		APlayerController* OwningPC = GetOwningPlayerController();
@@ -86,7 +86,7 @@ void AStaHUD::HandleControllerStateChanged(FGameplayTag BeforeState, FGameplayTa
 
 		MenuWidgets.Add(NewPopUpWidget);
 	}
-	else if (BeforeState.MatchesTagExact(StaTags::State::Menu) && !AfterState.MatchesTagExact(StaTags::State::Menu))
+	else if (BeforeState.MatchesTagExact(StaTags::State::Controller::Menu) && !AfterState.MatchesTagExact(StaTags::State::Controller::Menu))
 	{
 		for (UUserWidget* MenuWidget : MenuWidgets)
 		{

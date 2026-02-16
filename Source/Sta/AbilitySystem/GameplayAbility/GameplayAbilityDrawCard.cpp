@@ -35,20 +35,20 @@ void UGameplayAbilityDrawCard::ActivateAbility(const FGameplayAbilitySpecHandle 
 
 	if (!ActorASC || !GameMode || !PS || !ChargeResetEffect || !TriggerEventData->Target)
 	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
 	APlayerController* PC = Cast<APlayerController>(PS->GetOwner());
     if (!PC)
     {
-    	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+    	EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
     	return;
     }
 	
 	if (!GameMode->CanDrawCard(PC))
 	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 	
@@ -59,7 +59,7 @@ void UGameplayAbilityDrawCard::ActivateAbility(const FGameplayAbilitySpecHandle 
 	
 	if (!bIsAutoDraw && !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 	

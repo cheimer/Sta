@@ -33,23 +33,17 @@ public:
 	ATTRIBUTE_ACCESSORS(ThisClass, MaxUnitNum);
 	ATTRIBUTE_ACCESSORS(ThisClass, Defense);
 	
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_UnitNum)
+	UPROPERTY(BlueprintReadOnly)
 	FGameplayAttributeData UnitNum;
 	
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxUnitNum)
 	FGameplayAttributeData MaxUnitNum;
 	
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Defense)
+	UPROPERTY(BlueprintReadOnly)
 	FGameplayAttributeData Defense;
 
 protected:
 	UFUNCTION()
-	void OnRep_UnitNum(const FGameplayAttributeData& OldValue);
-	
-	UFUNCTION()
 	void OnRep_MaxUnitNum(const FGameplayAttributeData& OldValue);
-	
-	UFUNCTION()
-	void OnRep_Defense(const FGameplayAttributeData& OldValue);
 	
 };

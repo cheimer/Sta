@@ -55,5 +55,8 @@ protected:
 
 	UPROPERTY()
 	TArray<FActiveGameplayEffectHandle> ActivatedEffectHandles;
+
+private:
+	float RecentChargeDrawTime = -1.0f;
 	
 };
