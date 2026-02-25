@@ -8,6 +8,15 @@
 #include "UObject/Object.h"
 #include "CardTargeting.generated.h"
 
+UENUM()
+enum class ETargetFilter
+{
+	Any,
+	Friendly,
+	Hostile,
+	NoTeam
+};
+
 /**
  * 
  */
@@ -18,5 +27,11 @@ class STA_API UCardTargeting : public UObject
 
 public:
 	virtual FGameplayAbilityTargetDataHandle FindTargets(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayEventData* EventData);
+
+protected:
+	virtual bool IsTargetPassFilter(const FGameplayAbilityActorInfo* ActorInfo, AActor* TargetActor);
+	
+	UPROPERTY(EditAnywhere, Category = "Targeting")
+	ETargetFilter TargetFilter = ETargetFilter::Any;
 	
 };

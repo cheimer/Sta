@@ -9,8 +9,11 @@
 #include "Sta.h"
 #include "AbilitySystem/StaAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSet/AreaAttributeSet.h"
+#include "FunctionLibrary/AreaCalc.h"
+#include "GameFramework/PlayerState.h"
 #include "GameplayTag/StaTags.h"
 #include "Helper/StaHelper.h"
+#include "Net/UnrealNetwork.h"
 
 
 AAreaBase::AAreaBase()
@@ -18,6 +21,7 @@ AAreaBase::AAreaBase()
 	PrimaryActorTick.bCanEverTick = false;
 	
 	bReplicates = true;
+	bAlwaysRelevant = true;
 
 	AbilitySystemComponent = CreateDefaultSubobject<UStaAbilitySystemComponent>("AbilitySystemComponent");
 	AbilitySystemComponent->SetIsReplicated(true);
@@ -34,6 +38,14 @@ AAreaBase::AAreaBase()
 
 }
 
+void AAreaBase::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ThisClass, OwningState);
+	
+}
+
 void AAreaBase::BeginPlay()
 {
 	Super::BeginPlay();
@@ -43,36 +55,40 @@ void AAreaBase::BeginPlay()
 	if (HasAuthority() && GetAbilitySystemComponent())
 	{
 		GetAbilitySystemComponent()->GetGameplayAttributeValueChangeDelegate(
-		UAreaAttributeSet::GetUnitNumAttribute()).AddUObject(this, &ThisClass::OnUnitNumChanged);
+			UAreaAttributeSet::GetUnitNumAttribute()).AddUObject(this, &ThisClass::OnValueChanged);
 		
 		GetAbilitySystemComponent()->GetGameplayAttributeValueChangeDelegate(
-			UAreaAttributeSet::GetDefenseAttribute()).AddUObject(this, &ThisClass::OnDefenseChanged);
+			UAreaAttributeSet::GetDefenseAttribute()).AddUObject(this, &ThisClass::OnValueChanged);
+		
+		GetAbilitySystemComponent()->GetGameplayAttributeValueChangeDelegate(
+			UAreaAttributeSet::GetBluffUnitAddAttribute()).AddUObject(this, &AAreaBase::OnBluffChanged);
+		
+		GetAbilitySystemComponent()->GetGameplayAttributeValueChangeDelegate(
+			UAreaAttributeSet::GetBluffDefenseAddAttribute()).AddUObject(this, &AAreaBase::OnBluffChanged);
+		
 	}
-	
+
+	SetAreaMaterialColor(NeutralColor);
 }
 
-void AAreaBase::OnUnitNumChanged(const FOnAttributeChangeData& Data)
+void AAreaBase::OnValueChanged(const FOnAttributeChangeData& Data)
 {
 	if (!HasAuthority()) return;
-
 	if (!GetAttributeSet()) return;
 
-	OnAreaValueChanged.Broadcast(this, Data.NewValue, GetAttributeSet()->GetDefense());
+	OnAreaValueChanged.Broadcast(this, GetAttributeSet()->GetUnitNum(), GetAttributeSet()->GetDefense());
 	
-	//Send Unit Data To Owner Player
-	StaDebug::Print(FString::Printf(TEXT("%s : Before %.0f, After %.0f"), *GetNameSafe(this), Data.OldValue, Data.NewValue));
+	StaDebug::Print(FString::Printf(TEXT("%s Value : Before %.0f, After %.0f\n"), *GetNameSafe(this), Data.OldValue, Data.NewValue));
 }
 
-void AAreaBase::OnDefenseChanged(const FOnAttributeChangeData& Data)
+void AAreaBase::OnBluffChanged(const FOnAttributeChangeData& Data)
 {
 	if (!HasAuthority()) return;
-	
 	if (!GetAttributeSet()) return;
 
-	OnAreaValueChanged.Broadcast(this, GetAttributeSet()->GetUnitNum(), Data.NewValue);
+	OnAreaBluffChanged.Broadcast(this, GetAttributeSet()->GetBluffUnitAdd(), GetAttributeSet()->GetBluffDefenseAdd());
 	
-	//Send Unit Data To Owner Player
-	StaDebug::Print("Defense Change");
+	StaDebug::Print(FString::Printf(TEXT("%s Bluff : Before %.0f, After %.0f\n"), *GetNameSafe(this), Data.OldValue, Data.NewValue));
 }
 
 void AAreaBase::SetInteractOptions()
@@ -85,16 +101,25 @@ void AAreaBase::SetInteractOptions()
 	FInteractOption MoveOption;
 	MoveOption.DisplayName = FText::FromString("Move");
 	MoveOption.InteractTag = StaTags::Interaction::Area::Move;
-	InfoOption.TargetActor = this;
+	MoveOption.TargetActor = this;
 	
+	FInteractOption ScanOption;
+	ScanOption.DisplayName = FText::FromString("Scan");
+	ScanOption.InteractTag = StaTags::Interaction::Area::Scan;
+	ScanOption.TargetActor = this;
+
 	FInteractOption CancelOption;
 	CancelOption.DisplayName = FText::FromString("Cancel");
 	CancelOption.InteractTag = StaTags::Interaction::Area::Cancel;
-	InfoOption.TargetActor = this;
+	CancelOption.TargetActor = this;
 
-	Options.Add(InfoOption);
-	Options.Add(MoveOption);
-	Options.Add(CancelOption);
+	FriendOptions.Add(InfoOption);
+	FriendOptions.Add(MoveOption);
+	FriendOptions.Add(CancelOption);
+
+	HostileOptions.Add(InfoOption);
+	HostileOptions.Add(ScanOption);
+	HostileOptions.Add(CancelOption);
 	
 }
 
@@ -135,9 +160,49 @@ void AAreaBase::SetHighlight(bool bIsHighlight)
 	
 }
 
+void AAreaBase::OnRep_OwningState()
+{
+	if (!OwningState.IsValid() || !GetWorld()->GetFirstPlayerController() || !GetWorld()->GetFirstPlayerController()->PlayerState)
+	{
+		SetAreaMaterialColor(NeutralColor);
+		return;
+	}
+
+	if (GetWorld()->GetFirstPlayerController()->PlayerState == OwningState)
+	{
+		SetAreaMaterialColor(FriendlyColor);
+	}
+	else
+	{
+		SetAreaMaterialColor(HostileColor);
+	}
+
+}
+
+void AAreaBase::SetAreaMaterialColor(FLinearColor Color)
+{
+	if (!AreaMesh) return;
+	
+	UMaterialInstanceDynamic* AreaMI = Cast<UMaterialInstanceDynamic>(AreaMesh->GetMaterial(0));
+	if (!AreaMI)
+	{
+		AreaMesh->CreateDynamicMaterialInstance(0);
+		AreaMI = Cast<UMaterialInstanceDynamic>(AreaMesh->GetMaterial(0));
+		if (!AreaMI) return;
+	}
+
+	AreaMI->SetVectorParameterValue(FName("GlowColor"), Color);
+	
+}
+
+void AAreaBase::SetLastScanTime()
+{
+	LastScanTime = GetWorld()->GetUnpausedTimeSeconds();
+}
+
 void AAreaBase::OnHoverBegin()
 {
-	StaDebug::Print(FString::Printf(TEXT("%u Area Unit Num : %f"), AreaTeamId.GetId(), GetAttributeSet()->GetUnitNum()));
+
 }
 
 void AAreaBase::OnHoverEnd()
@@ -160,20 +225,47 @@ void AAreaBase::OnInteractEnd(const FHitResult& HitResult)
 
 }
 
-const TArray<FInteractOption>& AAreaBase::GetInteractOptions()
+const TArray<FInteractOption>& AAreaBase::GetInteractOptions(FGenericTeamId Interactor)
 {
-	return Options;
+	if (GetGenericTeamId() == Interactor)
+	{
+		return FriendOptions;
+	}
+	else
+	{
+		return HostileOptions;
+	}
 }
 
-FText AAreaBase::GetInfoText()
+FText AAreaBase::GetInfoText(FGenericTeamId Interactor)
 {
-	if (Options.IsEmpty()) return FText();
 	if (!GetAttributeSet()) return FText();
 	
-	FText InfoText = FText::FromString(FString::Printf(TEXT("%s\nUnit : %d\nDefense : %d"),
-		*GetName(), FMath::FloorToInt(GetAttributeSet()->GetUnitNum()), FMath::FloorToInt(GetAttributeSet()->GetDefense())));
-	
-	return InfoText;
+	if (GetGenericTeamId() == Interactor)
+	{
+		return FText::FromString(FString::Printf(TEXT("%s\nUnit : %d (Bluff : %d)\nDefense : x%.1f (Bluff : x%.1f)"),
+			*GetName(),
+			FMath::RoundToInt(GetAttributeSet()->GetUnitNum()),
+			FMath::RoundToInt(UAreaCalc::CalcBluffUnit(this)),
+			GetAttributeSet()->GetDefense(),
+			UAreaCalc::CalcBluffDefense(this)
+			));
+	}
+	else
+	{
+		FString InfoString = FString::Printf(TEXT("%s\nUnit : %d\nDefense : x%.1f"),
+			*GetName(), FMath::RoundToInt(GetAttributeSet()->GetUnitNum()),
+			GetAttributeSet()->GetDefense()
+			);
+		
+		if (GetLastScanTime() > 0)
+		{
+			InfoString += FString::Printf(TEXT("\nLast Scan : %lld seconds age"),
+				FMath::FloorToInt(FMath::Clamp(GetWorld()->GetUnpausedTimeSeconds() - GetLastScanTime(), 0.0f, 99.0f)));
+		}
+
+		return FText::FromString(InfoString);
+	}
 }
 
 /**
@@ -194,10 +286,25 @@ UAreaAttributeSet* AAreaBase::GetAttributeSet() const
  */
 void AAreaBase::SetGenericTeamId(const FGenericTeamId& TeamID)
 {
-	AreaTeamId = TeamID;
+	TArray<AActor*> FoundActors;
+	for (FConstPlayerControllerIterator PCIter = GetWorld()->GetPlayerControllerIterator(); PCIter; ++PCIter)
+	{
+		IGenericTeamAgentInterface* PlayerTeam  = Cast<IGenericTeamAgentInterface>(PCIter->Get()->PlayerState);
+		if (!PlayerTeam) continue;
+
+		if (PlayerTeam->GetGenericTeamId() == TeamID)
+		{
+			OwningState = Cast<APlayerState>(PCIter->Get()->PlayerState);
+			break;
+		}
+	}
+	
 }
 
 FGenericTeamId AAreaBase::GetGenericTeamId() const
 {
-	return AreaTeamId;
+	IGenericTeamAgentInterface* GenericTeam = Cast<IGenericTeamAgentInterface>(OwningState);
+	if (!GenericTeam) return FGenericTeamId::NoTeam;
+
+	return GenericTeam->GetGenericTeamId();
 }

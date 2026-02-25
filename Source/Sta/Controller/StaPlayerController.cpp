@@ -23,14 +23,6 @@
 AStaPlayerController::AStaPlayerController()
 {
 	bShowMouseCursor = true;
-	PlayerTeamID = FGenericTeamId::NoTeam;
-}
-
-void AStaPlayerController::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(ThisClass, PlayerTeamID);
 }
 
 void AStaPlayerController::BeginPlay()
@@ -67,7 +59,6 @@ void AStaPlayerController::SetupInputComponent()
 			EnhancedInputComponent->BindAction(InputActionPtr, TriggerEvent, this, FunctionName);
 		}
 	}
-	
 
 }
 
@@ -141,6 +132,15 @@ void AStaPlayerController::ClientAreaValueChanged_Implementation(AAreaBase* Area
 
 	AreaActor->GetAttributeSet()->SetUnitNum(UnitValue);
 	AreaActor->GetAttributeSet()->SetDefense(DefenseValue);
+	AreaActor->SetLastScanTime();
+}
+
+void AStaPlayerController::ClientAreaBluffChanged_Implementation(AAreaBase* AreaActor, const float BluffUnitAdd, const float BluffDefenseAdd)
+{
+	if (!AreaActor || !AreaActor->GetAttributeSet()) return;
+
+	AreaActor->GetAttributeSet()->SetBluffUnitAdd(BluffUnitAdd);
+	AreaActor->GetAttributeSet()->SetBluffDefenseAdd(BluffDefenseAdd);
 }
 
 void AStaPlayerController::UpdateHoveredActor()
@@ -263,9 +263,25 @@ void AStaPlayerController::SetControllerTargeting()
 {
 	SetControllerState(StaTags::State::Controller::Targeting);
 
+	if (RecentInteractActor.IsValid())
+	{
+		SetConnectedAreasHighlight(RecentInteractActor.Get(), true);
+	}
+}
+
+void AStaPlayerController::ScanInteractingArea()
+{
 	if (!RecentInteractActor.IsValid()) return;
-	
-	SetConnectedAreasHighlight(RecentInteractActor.Get(), true);
+
+	FGameplayEventData ScanEventData;
+		
+	FGameplayAbilityTargetData_ActorArray* AreaArray = new FGameplayAbilityTargetData_ActorArray();
+	AreaArray->TargetActorArray.Add(RecentInteractActor.Get());
+		
+	ScanEventData.TargetData.Add(AreaArray);
+		
+	TriggerGameplayEvent(StaTags::Event::Area::Scan, &ScanEventData);
+		
 }
 
 void AStaPlayerController::SetConnectedAreasHighlight(AActor* RootArea, const bool bIsHighlight)
@@ -278,19 +294,6 @@ void AStaPlayerController::SetConnectedAreasHighlight(AActor* RootArea, const bo
 			ConnectedArea->SetHighlight(bIsHighlight);
 		}
 	}
-}
-
-/**
- * GenericTeamAgentInterface
- */
-void AStaPlayerController::SetGenericTeamId(const FGenericTeamId& TeamID)
-{
-	PlayerTeamID = TeamID;
-}
-
-FGenericTeamId AStaPlayerController::GetGenericTeamId() const
-{
-	return PlayerTeamID;
 }
 
 /**
@@ -313,7 +316,12 @@ void AStaPlayerController::InteractBegin(const FInputActionValue& Value)
 	}
 	else
 	{
-		const TArray<FInteractOption>& Options = InteractableActor->GetInteractOptions();
+		FGenericTeamId OwningTeamId = FGenericTeamId::NoTeam;
+		if (IGenericTeamAgentInterface* StateTeamID = Cast<IGenericTeamAgentInterface>(PlayerState))
+		{
+			OwningTeamId = StateTeamID->GetGenericTeamId();
+		}
+		const TArray<FInteractOption>& Options = InteractableActor->GetInteractOptions(OwningTeamId);
 		if (Options.IsEmpty()) return;
 	
 		InteractableActor->OnInteractBegin(HitResult);
@@ -389,7 +397,12 @@ void AStaPlayerController::InteractEnd(const FInputActionValue& Value)
 	}
 	else
 	{
-		const TArray<FInteractOption>& Options = InteractableActor->GetInteractOptions();
+		FGenericTeamId OwningTeamId = FGenericTeamId::NoTeam;
+		if (IGenericTeamAgentInterface* StateTeamID = Cast<IGenericTeamAgentInterface>(PlayerState))
+		{
+			OwningTeamId = StateTeamID->GetGenericTeamId();
+		}
+		const TArray<FInteractOption>& Options = InteractableActor->GetInteractOptions(OwningTeamId);
 		if (Options.IsEmpty()) return;
 	
 		InteractableActor->OnInteractEnd(HitResult);

@@ -3,13 +3,16 @@
 
 #include "PlayWidget.h"
 
-#include "CommonNumericTextBlock.h"
 #include "Components/ProgressBar.h"
+#include "Components/TextBlock.h"
 
 void UPlayWidget::UpdateCost(float NewCost, float MaxCost)
 {
 	CostProgressBar->SetPercent(NewCost / MaxCost);
-	CostNumericText->SetCurrentValue(NewCost);
+	
+	FNumberFormattingOptions FormatOptions;
+	FormatOptions.SetMaximumFractionalDigits(0);
+	CostText->SetText(FText::AsNumber(NewCost, &FormatOptions));
 }
 
 void UPlayWidget::UpdateDrawCharge(float NewCharge, float MaxCharge)

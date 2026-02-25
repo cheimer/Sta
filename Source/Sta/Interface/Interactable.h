@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "GenericTeamAgentInterface.h"
 #include "UObject/Interface.h"
 #include "Interactable.generated.h"
 
@@ -42,9 +43,9 @@ public:
 	virtual void OnInteractBegin(const FHitResult& HitResult) = 0;
 	virtual void OnInteracting(const FHitResult& HitResult) = 0;
 	virtual void OnInteractEnd(const FHitResult& HitResult) = 0;
-	virtual const TArray<FInteractOption>& GetInteractOptions() = 0;
+	virtual const TArray<FInteractOption>& GetInteractOptions(FGenericTeamId Interactor) { static const TArray<FInteractOption> Empty; return Empty; }
 	
 	virtual bool CanInteract() const { return true; }
-	virtual FText GetInfoText() { return FText(); }
+	virtual FText GetInfoText(FGenericTeamId Interactor) { return FText(); }
 	
 };

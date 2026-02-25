@@ -167,6 +167,18 @@ void AStaHUD::HandleOrderSelected(FGameplayTag SelectedTag)
 		PlayerController->SetControllerTargeting();
 		
 	}
+	else if (SelectedTag.MatchesTagExact(StaTags::Interaction::Area::Scan))
+	{
+		while (!MenuWidgets.IsEmpty())
+		{
+			UUserWidget* PopWidget = MenuWidgets.Pop();
+			PopWidget->RemoveFromParent();
+		}
+		
+		PlayerController->SetControllerIdle();
+		PlayerController->ScanInteractingArea();
+		
+	}
 	else
 	{
 		checkf(false, TEXT("%s : not defined tag"), *GetName());

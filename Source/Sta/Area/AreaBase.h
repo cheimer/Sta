@@ -18,6 +18,7 @@ class UCapsuleComponent;
 class AAreaBase;
 
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnAreaValueChanged, AAreaBase* AreaActor, const float UnitValue, const float DefenseValue);
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnAreaBluffChanged, AAreaBase* AreaActor, const float BluffUnitAdd, const float BluffDefenseAdd);
 
 UCLASS()
 class STA_API AAreaBase : public AActor, public IInteractable, public IAbilitySystemInterface, public IGenericTeamAgentInterface
@@ -27,13 +28,20 @@ class STA_API AAreaBase : public AActor, public IInteractable, public IAbilitySy
 public:
 	AAreaBase();
 
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
 	void AddLine(ALineBase* Line);
 
 	TArray<AAreaBase*> GetConnectedArea();
 
 	void SetHighlight(bool bIsHighlight);
+	void SetAreaMaterialColor(FLinearColor Color);
+
+	void SetLastScanTime();
+	float GetLastScanTime() const { return LastScanTime; }
 
 	FOnAreaValueChanged OnAreaValueChanged;
+	FOnAreaBluffChanged OnAreaBluffChanged;
 
 	/**
 	* IInteractable
@@ -43,8 +51,8 @@ public:
 	virtual void OnInteractBegin(const FHitResult& HitResult) override;
 	virtual void OnInteracting(const FHitResult& HitResult) override;
 	virtual void OnInteractEnd(const FHitResult& HitResult) override;
-	virtual const TArray<FInteractOption>& GetInteractOptions() override;
-	virtual FText GetInfoText() override;
+	virtual const TArray<FInteractOption>& GetInteractOptions(FGenericTeamId Interactor) override;
+	virtual FText GetInfoText(FGenericTeamId Interactor = FGenericTeamId::NoTeam) override;
 
 	/**
 	 * AbilitySystemInterface
@@ -58,14 +66,22 @@ public:
 	virtual void SetGenericTeamId(const FGenericTeamId& TeamID) override;
 	virtual FGenericTeamId GetGenericTeamId() const override;
 
+	/**
+	 * Get/Set Func
+	 */
+	APlayerState* GetOwningState() const {return OwningState.Get();}
+
 protected:
 	virtual void BeginPlay() override;
 
-	void OnUnitNumChanged(const FOnAttributeChangeData& Data);
-	void OnDefenseChanged(const FOnAttributeChangeData& Data);
+	void OnValueChanged(const FOnAttributeChangeData& Data);
+	void OnBluffChanged(const FOnAttributeChangeData& Data);
 
-	UPROPERTY()
-	TObjectPtr<APlayerState> OwningActor = nullptr;
+	UPROPERTY(ReplicatedUsing = OnRep_OwningState)
+	TWeakObjectPtr<APlayerState> OwningState = nullptr;
+
+	UFUNCTION()
+	void OnRep_OwningState();
 
 	UPROPERTY(VisibleAnywhere, Category = "Component")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
@@ -84,8 +100,16 @@ protected:
 
 private:
 	void SetInteractOptions();
+
+	UPROPERTY(EditAnywhere, Category = "VFX")
+	FLinearColor NeutralColor = FLinearColor::White;
+	UPROPERTY(EditAnywhere, Category = "VFX")
+	FLinearColor HostileColor = FLinearColor::Red;
+	UPROPERTY(EditAnywhere, Category = "VFX")
+	FLinearColor FriendlyColor = FLinearColor::Blue;
 	
-	TArray<FInteractOption> Options;
+	TArray<FInteractOption> FriendOptions;
+	TArray<FInteractOption> HostileOptions;
 
 	UPROPERTY()
 	TArray<TObjectPtr<ALineBase>> ConnectLines;
@@ -93,6 +117,6 @@ private:
 	UPROPERTY(Transient)
 	UNiagaraComponent* SpawnedHighlight;
 
-	FGenericTeamId AreaTeamId;
-	
+	float LastScanTime = -1.0f;
+
 };

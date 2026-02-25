@@ -5,6 +5,8 @@
 
 #include "Area/AreaBase.h"
 #include "Controller/StaPlayerController.h"
+#include "FunctionLibrary/AreaCalc.h"
+#include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 
 void UAreaInfoSubsystem::OnWorldBeginPlay(UWorld& InWorld)
@@ -21,6 +23,7 @@ void UAreaInfoSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 		if (AAreaBase* Area = Cast<AAreaBase>(AreaActor))
 		{
 			Area->OnAreaValueChanged.AddUObject(this, &ThisClass::OnAreaValueChanged);
+			Area->OnAreaBluffChanged.AddUObject(this, &ThisClass::OnAreaBluffChanged);
 		}
 	}
 	
@@ -28,19 +31,42 @@ void UAreaInfoSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 
 void UAreaInfoSubsystem::OnAreaValueChanged(AAreaBase* AreaActor, const float UnitValue, const float DefenseValue)
 {
-	if (!AreaActor) return;
+	if (!AreaActor || !AreaActor->GetOwningState()) return;
 
-	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+	IGenericTeamAgentInterface* OwningTeam = Cast<IGenericTeamAgentInterface>(AreaActor->GetOwningState());
+	if (!OwningTeam) return;
+
+	if (OwningTeam->GetGenericTeamId() != AreaActor->GetGenericTeamId()) return;
+
+	if (AStaPlayerController* StaPlayerController = Cast<AStaPlayerController>(AreaActor->GetOwningState()->GetOwningController()))
 	{
-		IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(Iterator->Get());
-		if (!TeamAgentInterface) continue;
-		
-		if (TeamAgentInterface->GetGenericTeamId() != AreaActor->GetGenericTeamId()) continue;
-			
-		if (AStaPlayerController* StaPlayerController = Cast<AStaPlayerController>(Iterator->Get()))
-		{
-			StaPlayerController->ClientAreaValueChanged(AreaActor, UnitValue, DefenseValue);
-		}
-		
+		StaPlayerController->ClientAreaValueChanged(AreaActor, UnitValue, DefenseValue);
+	}
+	
+}
+
+void UAreaInfoSubsystem::OnAreaBluffChanged(AAreaBase* AreaActor, const float BluffUnitAdd, const float BluffDefenseAdd)
+{
+	if (!AreaActor || !AreaActor->GetOwningState()) return;
+
+	IGenericTeamAgentInterface* OwningTeam = Cast<IGenericTeamAgentInterface>(AreaActor->GetOwningState());
+	if (!OwningTeam) return;
+
+	if (OwningTeam->GetGenericTeamId() != AreaActor->GetGenericTeamId()) return;
+
+	if (AStaPlayerController* StaPlayerController = Cast<AStaPlayerController>(AreaActor->GetOwningState()->GetOwningController()))
+	{
+		StaPlayerController->ClientAreaBluffChanged(AreaActor, BluffUnitAdd, BluffDefenseAdd);
+	}
+	
+}
+
+void UAreaInfoSubsystem::UpdateAreaBluffTo(AAreaBase* TargetArea, APlayerState* PS)
+{
+	if (!TargetArea || !TargetArea->GetOwningState() || !PS) return;
+
+	if (AStaPlayerController* StaPlayerController = Cast<AStaPlayerController>(PS->GetOwningController()))
+	{
+		StaPlayerController->ClientAreaValueChanged(TargetArea, UAreaCalc::CalcBluffUnit(TargetArea), UAreaCalc::CalcBluffDefense(TargetArea));
 	}
 }

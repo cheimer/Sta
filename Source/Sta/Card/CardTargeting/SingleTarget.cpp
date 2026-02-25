@@ -11,9 +11,8 @@ FGameplayAbilityTargetDataHandle USingleTarget::FindTargets(const FGameplayAbili
 	
 	AActor* Target = const_cast<AActor*>(EventData->Target.Get());
 	if (!Target) return DataHandle;
-	
-	const IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Target);
-	if (!AbilityInterface || !AbilityInterface->GetAbilitySystemComponent()) return DataHandle;
+
+	if (!IsTargetPassFilter(ActorInfo, Target)) return DataHandle;
 	
 	FGameplayAbilityTargetData_ActorArray* ActorArrayData = new FGameplayAbilityTargetData_ActorArray();
 	ActorArrayData->TargetActorArray.Add(Target);

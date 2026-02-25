@@ -13,6 +13,8 @@ namespace StaTags
 		UE_DEFINE_GAMEPLAY_TAG(Cost, "StaTags.SetByCaller.Cost");
 		UE_DEFINE_GAMEPLAY_TAG(UnitNum, "StaTags.SetByCaller.UnitNum");
 		UE_DEFINE_GAMEPLAY_TAG(Defense, "StaTags.SetByCaller.Defense");
+		UE_DEFINE_GAMEPLAY_TAG(BluffUnitNum, "StaTags.SetByCaller.BluffUnitNum");
+		UE_DEFINE_GAMEPLAY_TAG(BluffDefense, "StaTags.SetByCaller.BluffDefense");
 		UE_DEFINE_GAMEPLAY_TAG(Duration, "StaTags.SetByCaller.Duration");
 	}
 	
@@ -22,8 +24,7 @@ namespace StaTags
 		{
 			UE_DEFINE_GAMEPLAY_TAG(Spell, "StaTags.Ability.Card.Spell");
 			UE_DEFINE_GAMEPLAY_TAG(Employ, "StaTags.Ability.Card.Employ");
-			UE_DEFINE_GAMEPLAY_TAG(Delayed, "StaTags.Ability.Card.Delayed");
-			UE_DEFINE_GAMEPLAY_TAG(Deception, "StaTags.Ability.Card.Deception");
+			UE_DEFINE_GAMEPLAY_TAG(Bluff, "StaTags.Ability.Card.Bluff");
 		}
 	}
 
@@ -39,8 +40,7 @@ namespace StaTags
 		namespace Area
 		{
 			UE_DEFINE_GAMEPLAY_TAG(Move, "StaTags.Event.Area.Move");
-			UE_DEFINE_GAMEPLAY_TAG(dispute, "StaTags.Event.Area.dispute");
-			UE_DEFINE_GAMEPLAY_TAG(Captured, "StaTags.Event.Area.Captured");
+			UE_DEFINE_GAMEPLAY_TAG(Scan, "StaTags.Event.Area.Scan");
 		}
 	}
 
@@ -57,6 +57,7 @@ namespace StaTags
 		{
 			UE_DEFINE_GAMEPLAY_TAG(Info, "StaTags.Interaction.Area.Info");
 			UE_DEFINE_GAMEPLAY_TAG(Move, "StaTags.Interaction.Area.Move");
+			UE_DEFINE_GAMEPLAY_TAG(Scan, "StaTags.Interaction.Area.Scan");
 			UE_DEFINE_GAMEPLAY_TAG(Cancel, "StaTags.Interaction.Area.Cancel");
 		}
 	}

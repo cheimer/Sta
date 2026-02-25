@@ -71,6 +71,7 @@ void UGameplayAbilityUseCard::ActivateAbility(const FGameplayAbilitySpecHandle H
 	if (TargetDataHandle.Num() <= 0)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
 	}
 
 	if (!GameMode->CardInHand(PC, CardData))

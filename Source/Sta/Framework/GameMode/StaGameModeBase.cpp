@@ -26,36 +26,30 @@ void AStaGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//TODO: Area Test Code
+	if (bIsSinglePlay)
 	{
-		TArray<AActor*> FoundActors;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAreaBase::StaticClass(), FoundActors);
-
-		for (AActor* FoundActor : FoundActors)
-		{
-			if (AAreaBase* Area = Cast<AAreaBase>(FoundActor))
-			{
-				FGenericTeamId NewTeamId(CurrentTeamNum);
-				Area->SetGenericTeamId(NewTeamId);
-			}
-			
-		}
+		//PlayerNum = 1;
 	}
-	
+
 }
 
 void AStaGameModeBase::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
-	if (IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(NewPlayer))
+	if (IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(NewPlayer->PlayerState))
 	{
 		check(CurrentTeamNum < 255);
 		
 		FGenericTeamId NewTeamId(CurrentTeamNum);
 		TeamAgentInterface->SetGenericTeamId(NewTeamId);
-		//TODO: Area Test Code
-		//CurrentTeamNum++;
+
+		CurrentTeamNum++;
+
+		if (CurrentTeamNum == PlayerNum)
+		{
+			InitAreaState();
+		}
 	}
 }
 
@@ -78,6 +72,30 @@ void AStaGameModeBase::InitDeckState(const TArray<FCardInfo>& DeckList, APlayerC
 	for (int i = 0; i < InitCardNum; i++)
 	{
 		DrawCard(PC);
+	}
+}
+
+void AStaGameModeBase::InitAreaState()
+{
+	//TODO: Temp Area Assign
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAreaBase::StaticClass(), FoundActors);
+
+	int IterIndex = 0;
+	for (FConstPlayerControllerIterator PCIter = GetWorld()->GetPlayerControllerIterator(); PCIter; ++PCIter)
+	{
+		for (AActor* FoundActor : FoundActors)
+		{
+			if (AAreaBase* Area = Cast<AAreaBase>(FoundActor))
+			{
+				if (Area->GetGenericTeamId() == FGenericTeamId::NoTeam)
+				{
+					Area->SetGenericTeamId(IterIndex);
+					IterIndex++;
+					break;
+				}
+			}
+		}
 	}
 }
 

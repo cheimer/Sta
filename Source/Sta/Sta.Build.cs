@@ -21,7 +21,6 @@ public class Sta : ModuleRules
 			"GameplayTasks",
 			
 			"UMG",
-			"CommonUI",
 			
 			"Niagara",
 			

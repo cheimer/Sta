@@ -26,7 +26,7 @@ protected:
 	UProgressBar* CostProgressBar;
 
 	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
-	UCommonNumericTextBlock* CostNumericText;
+	UTextBlock* CostText;
 	
 	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
 	UProgressBar* DrawProgressBar;

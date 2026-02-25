@@ -18,6 +18,8 @@ FGameplayAbilityTargetDataHandle UAllTarget::FindTargets(const FGameplayAbilityA
 	
 	for (AActor* Target : FoundTargets)
 	{
+		if (!IsTargetPassFilter(ActorInfo, Target)) continue;
+		
 		const IAbilitySystemInterface* AbilityInterface = Cast<IAbilitySystemInterface>(Target);
 		if (!AbilityInterface || !AbilityInterface->GetAbilitySystemComponent()) continue;
 	

@@ -5,6 +5,7 @@
 
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
+#include "GameFramework/PlayerState.h"
 
 void UInfoWidget::SetOptions(const TArray<FInteractOption>& Options)
 {
@@ -14,7 +15,13 @@ void UInfoWidget::SetOptions(const TArray<FInteractOption>& Options)
 	
 	if (IInteractable* InteractActor = Cast<IInteractable>(Options[0].TargetActor.Get()))
 	{
-		InfoText->SetText(InteractActor->GetInfoText());
+		FGenericTeamId OwningTeamId = FGenericTeamId::NoTeam;
+		if (IGenericTeamAgentInterface* StateTeamID = Cast<IGenericTeamAgentInterface>(GetWorld()->GetFirstPlayerController()->GetPlayerState<APlayerState>()))
+		{
+			OwningTeamId = StateTeamID->GetGenericTeamId();
+		}
+		
+		InfoText->SetText(InteractActor->GetInfoText(OwningTeamId));
 	}
 }
 

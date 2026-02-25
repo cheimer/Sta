@@ -25,6 +25,7 @@ ACardBase::ACardBase()
 	CardMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	CardMesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	CardMesh->SetCastShadow(false);
+	CardMesh->SetRelativeRotation(FRotator(0.0f, 90.0f, 0.0f));
 
 	CardCollision = CreateDefaultSubobject<UCapsuleComponent>("CardCollision");
 	CardCollision->SetupAttachment(CardMesh);
@@ -145,7 +146,7 @@ void ACardBase::OnInteractEnd(const FHitResult& HitResult)
 	
 }
 
-const TArray<FInteractOption>& ACardBase::GetInteractOptions()
+const TArray<FInteractOption>& ACardBase::GetInteractOptions(FGenericTeamId Interactor)
 {
 	return Options;
 }

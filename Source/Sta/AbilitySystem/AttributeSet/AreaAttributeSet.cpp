@@ -8,9 +8,11 @@
 UAreaAttributeSet::UAreaAttributeSet()
 {
 	InitUnitNum(0.0f);
+	InitBluffUnitAdd(0.0f);
 	InitMaxUnitNum(99.0f);
 	
-	InitDefense(0.0f);
+	InitDefense(1.5f);
+	InitBluffDefenseAdd(0.0f);
 }
 
 void UAreaAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const

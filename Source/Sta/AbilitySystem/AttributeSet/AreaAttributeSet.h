@@ -30,11 +30,17 @@ public:
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
 	ATTRIBUTE_ACCESSORS(ThisClass, UnitNum);
+	ATTRIBUTE_ACCESSORS(ThisClass, BluffUnitAdd);
 	ATTRIBUTE_ACCESSORS(ThisClass, MaxUnitNum);
+	
 	ATTRIBUTE_ACCESSORS(ThisClass, Defense);
+	ATTRIBUTE_ACCESSORS(ThisClass, BluffDefenseAdd);
 	
 	UPROPERTY(BlueprintReadOnly)
 	FGameplayAttributeData UnitNum;
+	
+	UPROPERTY(BlueprintReadOnly)
+	FGameplayAttributeData BluffUnitAdd;
 	
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxUnitNum)
 	FGameplayAttributeData MaxUnitNum;
@@ -42,6 +48,9 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	FGameplayAttributeData Defense;
 
+	UPROPERTY(BlueprintReadOnly)
+	FGameplayAttributeData BluffDefenseAdd;
+	
 protected:
 	UFUNCTION()
 	void OnRep_MaxUnitNum(const FGameplayAttributeData& OldValue);

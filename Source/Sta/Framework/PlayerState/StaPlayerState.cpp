@@ -7,6 +7,7 @@
 #include "AbilitySystem/AttributeSet/PlayerAttributeSet.h"
 #include "GameplayTag/StaTags.h"
 #include "Helper/StaHelper.h"
+#include "Net/UnrealNetwork.h"
 
 AStaPlayerState::AStaPlayerState()
 {
@@ -19,6 +20,13 @@ AStaPlayerState::AStaPlayerState()
 	AttributeSet = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("AttributeSet"));
 
 	
+}
+
+void AStaPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ThisClass, PlayerTeamID);
 }
 
 void AStaPlayerState::BeginPlay()
@@ -105,4 +113,17 @@ UAbilitySystemComponent* AStaPlayerState::GetAbilitySystemComponent() const
 UPlayerAttributeSet* AStaPlayerState::GetAttributeSet() const
 {
 	return AttributeSet;
+}
+
+/**
+ * GenericTeamAgentInterface
+ */
+void AStaPlayerState::SetGenericTeamId(const FGenericTeamId& TeamID)
+{
+	PlayerTeamID = TeamID;
+}
+
+FGenericTeamId AStaPlayerState::GetGenericTeamId() const
+{
+	return PlayerTeamID;
 }

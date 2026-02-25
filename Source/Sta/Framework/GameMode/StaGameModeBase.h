@@ -40,6 +40,7 @@ public:
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
 	void InitDeckState(const TArray<FCardInfo>& DeckList, APlayerController* PC);
+	void InitAreaState();
 	
 	bool CanDrawCard(APlayerController* PC);
 	bool CardInHand(APlayerController* PC, const UCardData* CardData);
@@ -55,6 +56,12 @@ private:
 	
 	UPROPERTY()
 	TMap<APlayerController*, FPlayerDeckState> PlayerDeckState;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|Value")
+	bool bIsSinglePlay = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|Value")
+	int32 PlayerNum = 2;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Value")
 	int32 InitCardNum = 4;

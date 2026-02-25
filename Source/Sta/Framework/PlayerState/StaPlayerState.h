@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "GenericTeamAgentInterface.h"
 #include "GameFramework/PlayerState.h"
 #include "StaPlayerState.generated.h"
 
@@ -17,12 +18,14 @@ class UGameplayAbility;
  * 
  */
 UCLASS()
-class STA_API AStaPlayerState : public APlayerState, public IAbilitySystemInterface
+class STA_API AStaPlayerState : public APlayerState, public IAbilitySystemInterface, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
 public:
 	AStaPlayerState();
+
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void GiveDefaultAbilities();
 	void ApplyDefaultEffects();
@@ -34,6 +37,12 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
 	UPlayerAttributeSet* GetAttributeSet() const;
+	
+	/**
+	 * GenericTeamAgentInterface
+	 */
+	virtual void SetGenericTeamId(const FGenericTeamId& TeamID) override;
+	virtual FGenericTeamId GetGenericTeamId() const override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -57,6 +66,9 @@ protected:
 	TArray<FActiveGameplayEffectHandle> ActivatedEffectHandles;
 
 private:
+	UPROPERTY(Replicated)
+	FGenericTeamId PlayerTeamID;
+
 	float RecentChargeDrawTime = -1.0f;
 	
 };

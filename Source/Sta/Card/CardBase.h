@@ -29,7 +29,7 @@ public:
 	virtual void OnInteractBegin(const FHitResult& HitResult) override;
 	virtual void OnInteracting(const FHitResult& HitResult) override;
 	virtual void OnInteractEnd(const FHitResult& HitResult) override;
-	virtual const TArray<FInteractOption>& GetInteractOptions() override;
+	virtual const TArray<FInteractOption>& GetInteractOptions(FGenericTeamId Interactor);
 
 protected:
 	virtual void BeginPlay() override;
@@ -54,7 +54,7 @@ private:
 	void SetOptions();
 	
 	TWeakObjectPtr<APawn> OwnerPawn;
-
+	
 	TArray<FInteractOption> Options;
 	
 public:

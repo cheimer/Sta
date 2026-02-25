@@ -49,17 +49,16 @@ struct FInputActionConfig
 
 
 UCLASS()
-class STA_API AStaPlayerController : public APlayerController, public IGenericTeamAgentInterface
+class STA_API AStaPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
 public:
 	AStaPlayerController();
 
-	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;;
-
 	void SetControllerIdle();
 	void SetControllerTargeting();
+	void ScanInteractingArea();
 
 	void TriggerGameplayEvent(FGameplayTag GameplayTag, const FGameplayEventData* EventData);
 	
@@ -75,14 +74,8 @@ public:
 	UFUNCTION(Reliable, Client)
 	void ClientAreaValueChanged(AAreaBase* AreaActor, const float UnitValue, const float DefenseValue);
 
-	/**
-	 * GenericTeamAgentInterface
-	 */
-	virtual void SetGenericTeamId(const FGenericTeamId& TeamID) override;
-	virtual FGenericTeamId GetGenericTeamId() const override;
-	/**
-	 * ~GenericTeamAgentInterface
-	 */
+	UFUNCTION(Reliable, Client)
+	void ClientAreaBluffChanged(AAreaBase* AreaActor, const float BluffUnitAdd, const float BluffDefenseAdd);
 
 	FOnControllerStateChanged OnControllerStateChanged;
 	FOnControllerCanceled OnControllerCanceled;
@@ -148,7 +141,4 @@ private:
 
 	FGameplayTag StateTag = StaTags::State::Controller::Idle;
 
-	UPROPERTY(Replicated)
-	FGenericTeamId PlayerTeamID;
-	
 };
