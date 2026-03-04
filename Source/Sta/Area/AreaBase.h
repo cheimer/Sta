@@ -9,6 +9,8 @@
 #include "Interface/Interactable.h"
 #include "AreaBase.generated.h"
 
+class UGameplayEffect;
+class UTextRenderComponent;
 struct FOnAttributeChangeData;
 class UNiagaraComponent;
 class UNiagaraSystem;
@@ -30,12 +32,15 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
+	void AttackedBy(AAreaBase* Attacker, const float AttackUnitNum);
+
 	void AddLine(ALineBase* Line);
 
 	TArray<AAreaBase*> GetConnectedArea();
 
 	void SetHighlight(bool bIsHighlight);
 	void SetAreaMaterialColor(FLinearColor Color);
+	void SetTextRenderComponent();
 
 	void SetLastScanTime();
 	float GetLastScanTime() const { return LastScanTime; }
@@ -77,6 +82,8 @@ protected:
 	void OnValueChanged(const FOnAttributeChangeData& Data);
 	void OnBluffChanged(const FOnAttributeChangeData& Data);
 
+	FText GetSimpleInfoText(FGenericTeamId Interactor);
+
 	UPROPERTY(ReplicatedUsing = OnRep_OwningState)
 	TWeakObjectPtr<APlayerState> OwningState = nullptr;
 
@@ -97,6 +104,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "VFX")
 	FVector HighlightSpawnLocation = FVector(0.0f, 0.0f, 30.0f);
+
+	UPROPERTY(EditAnywhere, Category = "Component")
+	UTextRenderComponent* TextRenderComponent;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "GameplayEffect")
+	TSubclassOf<UGameplayEffect> UnitChangeEffectClass;
 
 private:
 	void SetInteractOptions();

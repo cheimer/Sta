@@ -133,6 +133,8 @@ void AStaPlayerController::ClientAreaValueChanged_Implementation(AAreaBase* Area
 	AreaActor->GetAttributeSet()->SetUnitNum(UnitValue);
 	AreaActor->GetAttributeSet()->SetDefense(DefenseValue);
 	AreaActor->SetLastScanTime();
+
+	AreaActor->SetTextRenderComponent();
 }
 
 void AStaPlayerController::ClientAreaBluffChanged_Implementation(AAreaBase* AreaActor, const float BluffUnitAdd, const float BluffDefenseAdd)
@@ -141,6 +143,8 @@ void AStaPlayerController::ClientAreaBluffChanged_Implementation(AAreaBase* Area
 
 	AreaActor->GetAttributeSet()->SetBluffUnitAdd(BluffUnitAdd);
 	AreaActor->GetAttributeSet()->SetBluffDefenseAdd(BluffDefenseAdd);
+	
+	AreaActor->SetTextRenderComponent();
 }
 
 void AStaPlayerController::UpdateHoveredActor()
@@ -361,7 +365,8 @@ void AStaPlayerController::InteractEnd(const FInputActionValue& Value)
 	if (StateTag == StaTags::State::Controller::Targeting)
 	{
 		AAreaBase* HoveredArea = Cast<AAreaBase>(HoveredActor);
-		if (!RecentInteractActor.IsValid() || !HoveredArea) return;
+		AAreaBase* RecentArea = Cast<AAreaBase>(RecentInteractActor);
+		if (!RecentArea || !HoveredArea) return;
 
 		bool bIsCorrectArea = false;
 		TArray<AAreaBase*> HoveredConnectedAreas = HoveredArea->GetConnectedArea();
@@ -388,8 +393,15 @@ void AStaPlayerController::InteractEnd(const FInputActionValue& Value)
 		MoveEventData.TargetData.Add(AreaArray);
 		//TODO: Temp move all
 		MoveEventData.EventMagnitude = InteractActorASC->GetNumericAttribute(UAreaAttributeSet::GetUnitNumAttribute());
-		
-		TriggerGameplayEvent(StaTags::Event::Area::Move, &MoveEventData);
+
+		if (RecentArea->GetGenericTeamId() == HoveredArea->GetGenericTeamId())
+		{
+			TriggerGameplayEvent(StaTags::Event::Area::Move, &MoveEventData);
+		}
+		else
+		{
+			TriggerGameplayEvent(StaTags::Event::Area::Attack, &MoveEventData);
+		}
 		
 		SetConnectedAreasHighlight(RecentInteractActor.Get(), false);
 

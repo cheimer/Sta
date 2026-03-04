@@ -1,15 +1,14 @@
 // Sta Project - Multiplay RTS with GAS
 
 
-#include "GameplayAbilityMoveUnit.h"
+#include "GameplayAbilityAttackUnit.h"
 
 #include "AbilitySystemComponent.h"
-#include "AbilitySystem/AttributeSet/AreaAttributeSet.h"
 #include "Area/AreaBase.h"
+#include "FunctionLibrary/AreaCalc.h"
 #include "GameplayTag/StaTags.h"
-#include "Helper/StaHelper.h"
 
-UGameplayAbilityMoveUnit::UGameplayAbilityMoveUnit()
+UGameplayAbilityAttackUnit::UGameplayAbilityAttackUnit()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	bRetriggerInstancedAbility = false;
@@ -17,17 +16,17 @@ UGameplayAbilityMoveUnit::UGameplayAbilityMoveUnit()
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly;
 	
 	FAbilityTriggerData TriggerData;
-	TriggerData.TriggerTag = StaTags::Event::Area::Move;
+	TriggerData.TriggerTag = StaTags::Event::Area::Attack;
 	TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
 	
 	AbilityTriggers.Add(TriggerData);
 }
 
-void UGameplayAbilityMoveUnit::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+void UGameplayAbilityAttackUnit::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
+	
 	if (!UnitChangeEffectClass)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -58,26 +57,24 @@ void UGameplayAbilityMoveUnit::ActivateAbility(const FGameplayAbilitySpecHandle 
 		return;
 	}
 
-	if (SrcArea->GetGenericTeamId() != DestArea->GetGenericTeamId())
+	if (SrcArea->GetGenericTeamId() == DestArea->GetGenericTeamId())
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 	
 	FGameplayEffectSpecHandle SrcUnitSpecHandle = MakeOutgoingGameplayEffectSpec(UnitChangeEffectClass);
-	FGameplayEffectSpecHandle DestUnitSpecHandle = MakeOutgoingGameplayEffectSpec(UnitChangeEffectClass);
-	if (!SrcUnitSpecHandle.IsValid() || !SrcUnitSpecHandle.Data.IsValid() || !DestUnitSpecHandle.IsValid() || !DestUnitSpecHandle.Data.IsValid())
+	if (!SrcUnitSpecHandle.IsValid())
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 	
 	SrcUnitSpecHandle.Data->SetSetByCallerMagnitude(StaTags::SetByCaller::UnitNum, -UnitNum);
-	DestUnitSpecHandle.Data->SetSetByCallerMagnitude(StaTags::SetByCaller::UnitNum, UnitNum);
-
 	SrcArea->GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*SrcUnitSpecHandle.Data.Get());
-	DestArea->GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*DestUnitSpecHandle.Data.Get());
 
+	DestArea->AttackedBy(SrcArea, UnitNum);
+	
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 	
 }

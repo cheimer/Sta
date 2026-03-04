@@ -18,5 +18,8 @@ class STA_API UAreaCalc : public UBlueprintFunctionLibrary
 public:
 	static float CalcBluffUnit(const AAreaBase* Area);
 	static float CalcBluffDefense(const AAreaBase* Area);
+
+	static float CalcGetDefenseValue(const float UnitNum, const float Defense);
+	static float CalcDefenseValueToUnitNum(const float DefenseValue, const float Defense);
 	
 };

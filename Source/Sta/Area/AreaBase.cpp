@@ -9,6 +9,7 @@
 #include "Sta.h"
 #include "AbilitySystem/StaAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSet/AreaAttributeSet.h"
+#include "Components/TextRenderComponent.h"
 #include "FunctionLibrary/AreaCalc.h"
 #include "GameFramework/PlayerState.h"
 #include "GameplayTag/StaTags.h"
@@ -35,7 +36,12 @@ AAreaBase::AAreaBase()
 	AreaMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	AreaMesh->SetCollisionObjectType(ECC_Area);
 	AreaMesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-
+	
+	TextRenderComponent = CreateDefaultSubobject<UTextRenderComponent>(TEXT("TextRenderComponent"));
+	TextRenderComponent->SetupAttachment(RootComponent);
+	TextRenderComponent->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
+	TextRenderComponent->SetVerticalAlignment(EVerticalTextAligment::EVRTA_TextCenter);
+	
 }
 
 void AAreaBase::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -69,6 +75,7 @@ void AAreaBase::BeginPlay()
 	}
 
 	SetAreaMaterialColor(NeutralColor);
+	SetTextRenderComponent();
 }
 
 void AAreaBase::OnValueChanged(const FOnAttributeChangeData& Data)
@@ -79,6 +86,7 @@ void AAreaBase::OnValueChanged(const FOnAttributeChangeData& Data)
 	OnAreaValueChanged.Broadcast(this, GetAttributeSet()->GetUnitNum(), GetAttributeSet()->GetDefense());
 	
 	StaDebug::Print(FString::Printf(TEXT("%s Value : Before %.0f, After %.0f\n"), *GetNameSafe(this), Data.OldValue, Data.NewValue));
+
 }
 
 void AAreaBase::OnBluffChanged(const FOnAttributeChangeData& Data)
@@ -89,6 +97,7 @@ void AAreaBase::OnBluffChanged(const FOnAttributeChangeData& Data)
 	OnAreaBluffChanged.Broadcast(this, GetAttributeSet()->GetBluffUnitAdd(), GetAttributeSet()->GetBluffDefenseAdd());
 	
 	StaDebug::Print(FString::Printf(TEXT("%s Bluff : Before %.0f, After %.0f\n"), *GetNameSafe(this), Data.OldValue, Data.NewValue));
+
 }
 
 void AAreaBase::SetInteractOptions()
@@ -121,6 +130,40 @@ void AAreaBase::SetInteractOptions()
 	HostileOptions.Add(ScanOption);
 	HostileOptions.Add(CancelOption);
 	
+}
+
+void AAreaBase::AttackedBy(AAreaBase* Attacker, const float AttackUnitNum)
+{
+	if (!Attacker || !Attacker->GetOwningState() || !GetAbilitySystemComponent() || !GetAttributeSet()) return;
+
+	float DefenseValue = UAreaCalc::CalcGetDefenseValue(GetAttributeSet()->GetUnitNum(), GetAttributeSet()->GetDefense());
+
+	FGameplayEffectContextHandle EffectContext = GetAbilitySystemComponent()->MakeEffectContext();
+	EffectContext.AddSourceObject(Attacker);
+
+	FGameplayEffectSpecHandle DamageSpec = GetAbilitySystemComponent()->MakeOutgoingSpec(UnitChangeEffectClass, 1.0f, EffectContext);
+	if (!DamageSpec.IsValid()) return;
+
+	if (DefenseValue >= AttackUnitNum)
+	{
+		float RemainUnitNum = UAreaCalc::CalcDefenseValueToUnitNum(DefenseValue - AttackUnitNum, GetAttributeSet()->GetDefense());
+		DamageSpec.Data->SetSetByCallerMagnitude(StaTags::SetByCaller::UnitNum, -(GetAttributeSet()->GetUnitNum() - RemainUnitNum));
+		
+		GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*DamageSpec.Data.Get());
+	}
+	else
+	{
+		DamageSpec.Data->SetSetByCallerMagnitude(StaTags::SetByCaller::UnitNum, -GetAttributeSet()->GetUnitNum());
+		
+		GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*DamageSpec.Data.Get());
+		
+		OwningState = Attacker->GetOwningState();
+		
+		DamageSpec.Data->SetSetByCallerMagnitude(StaTags::SetByCaller::UnitNum, AttackUnitNum - DefenseValue);
+		
+		GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*DamageSpec.Data.Get());
+	}
+
 }
 
 void AAreaBase::AddLine(ALineBase* Line)
@@ -171,10 +214,12 @@ void AAreaBase::OnRep_OwningState()
 	if (GetWorld()->GetFirstPlayerController()->PlayerState == OwningState)
 	{
 		SetAreaMaterialColor(FriendlyColor);
+		SetTextRenderComponent();
 	}
 	else
 	{
 		SetAreaMaterialColor(HostileColor);
+		SetTextRenderComponent();
 	}
 
 }
@@ -193,6 +238,62 @@ void AAreaBase::SetAreaMaterialColor(FLinearColor Color)
 
 	AreaMI->SetVectorParameterValue(FName("GlowColor"), Color);
 	
+}
+
+void AAreaBase::SetTextRenderComponent()
+{
+	if (!TextRenderComponent) return;
+	
+	if (!OwningState.IsValid() || !GetWorld()->GetFirstPlayerController() || !GetWorld()->GetFirstPlayerController()->PlayerState)
+	{
+		TextRenderComponent->SetText(FText::GetEmpty());
+		TextRenderComponent->SetTextRenderColor(NeutralColor.ToFColor(true));
+		return;
+	}
+	
+	IGenericTeamAgentInterface* StateTeamID = Cast<IGenericTeamAgentInterface>(GetWorld()->GetFirstPlayerController()->GetPlayerState<APlayerState>());
+	if (!StateTeamID || GetGenericTeamId() == FGenericTeamId::NoTeam)
+	{
+		TextRenderComponent->SetText(FText::GetEmpty());
+		TextRenderComponent->SetTextRenderColor(NeutralColor.ToFColor(true));
+		return;
+	}
+	
+	TextRenderComponent->SetText(GetSimpleInfoText(StateTeamID->GetGenericTeamId()));
+	
+	if (StateTeamID->GetGenericTeamId() == GetGenericTeamId())
+	{
+		TextRenderComponent->SetTextRenderColor(FriendlyColor.ToFColor(true));
+	}
+	else
+	{
+		TextRenderComponent->SetTextRenderColor(HostileColor.ToFColor(true));
+	}
+	
+}
+
+FText AAreaBase::GetSimpleInfoText(FGenericTeamId Interactor)
+{
+	if (!GetAttributeSet()) return FText();
+	
+	if (GetGenericTeamId() == Interactor)
+	{
+		return FText::FromString(FString::Printf(TEXT("Unit : %d(%d)\nDef : %.1f(%.1f)"),
+			FMath::RoundToInt(GetAttributeSet()->GetUnitNum()),
+			FMath::RoundToInt(UAreaCalc::CalcBluffUnit(this)),
+			GetAttributeSet()->GetDefense(),
+			UAreaCalc::CalcBluffDefense(this)
+			));
+	}
+	else
+	{
+		FString InfoString = FString::Printf(TEXT("Unit : %d\nDef : x%.1f"),
+			FMath::RoundToInt(GetAttributeSet()->GetUnitNum()),
+			GetAttributeSet()->GetDefense()
+			);
+
+		return FText::FromString(InfoString);
+	}
 }
 
 void AAreaBase::SetLastScanTime()
@@ -254,7 +355,8 @@ FText AAreaBase::GetInfoText(FGenericTeamId Interactor)
 	else
 	{
 		FString InfoString = FString::Printf(TEXT("%s\nUnit : %d\nDefense : x%.1f"),
-			*GetName(), FMath::RoundToInt(GetAttributeSet()->GetUnitNum()),
+			*GetName(),
+			FMath::RoundToInt(GetAttributeSet()->GetUnitNum()),
 			GetAttributeSet()->GetDefense()
 			);
 		

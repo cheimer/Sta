@@ -25,3 +25,13 @@ float UAreaCalc::CalcBluffDefense(const AAreaBase* Area)
 
 	return Defense + BluffAdd;
 }
+
+float UAreaCalc::CalcGetDefenseValue(const float UnitNum, const float Defense)
+{
+	return UnitNum * Defense;
+}
+
+float UAreaCalc::CalcDefenseValueToUnitNum(const float DefenseValue, const float Defense)
+{
+	return DefenseValue * (1 / Defense);
+}

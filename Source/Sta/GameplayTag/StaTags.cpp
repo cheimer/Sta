@@ -40,6 +40,7 @@ namespace StaTags
 		namespace Area
 		{
 			UE_DEFINE_GAMEPLAY_TAG(Move, "StaTags.Event.Area.Move");
+			UE_DEFINE_GAMEPLAY_TAG(Attack, "StaTags.Event.Area.Attack");
 			UE_DEFINE_GAMEPLAY_TAG(Scan, "StaTags.Event.Area.Scan");
 		}
 	}

@@ -41,6 +41,7 @@ namespace StaTags
 		namespace Area
 		{
 			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Move);
+			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Attack);
 			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Scan);
 		}
 	}
