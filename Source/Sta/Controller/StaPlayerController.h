@@ -36,13 +36,13 @@ struct FInputActionConfig
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|Input")
 	TObjectPtr<UInputAction> InputAction;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|Input")
 	ETriggerEvent TriggerEvent = ETriggerEvent::Triggered;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|Input")
 	FName FunctionName;
 	
 };

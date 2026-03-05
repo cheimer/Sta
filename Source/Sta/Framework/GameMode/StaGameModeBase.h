@@ -7,10 +7,12 @@
 #include "GameFramework/GameModeBase.h"
 #include "StaGameModeBase.generated.h"
 
+class AStaAIController;
+class AAIPawn;
 class UCardData;
 
 USTRUCT()
-struct FPlayerDeckState
+struct FDeckState
 {
 	GENERATED_BODY()
 
@@ -39,29 +41,39 @@ public:
 	
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
-	void InitDeckState(const TArray<FCardInfo>& DeckList, APlayerController* PC);
-	void InitAreaState();
+	void InitDeckState(const TArray<FCardInfo>& DeckList, AController* Controller);
 	
-	bool CanDrawCard(APlayerController* PC);
-	bool CardInHand(APlayerController* PC, const UCardData* CardData);
+	bool CanDrawCard(const AController* Controller);
+	bool CardInHand(const AController* Controller, const UCardData* CardData);
 
-	void DrawCard(APlayerController* PC);
-	void DiscardCard(APlayerController* PC, const UCardData* CardData);
+	void DrawCard(AController* Controller);
+	void DiscardCard(AController* Controller, const UCardData* CardData);
 
 protected:
 	virtual void BeginPlay() override;
 
 private:
 	void ShuffleDeck(TArray<TObjectPtr<const UCardData>>& Cards);
+
+	void StartGameSettings();
+	
+	void SpawnAIPawns();
+	void InitAreaState();
 	
 	UPROPERTY()
-	TMap<APlayerController*, FPlayerDeckState> PlayerDeckState;
+	TMap<AController*, FDeckState> DeckStates;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Sta|Value")
-	bool bIsSinglePlay = false;
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|Class")
+	TSubclassOf<AStaAIController> AIControllerClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|Class")
+	TSubclassOf<AAIPawn> AIPawnClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Value")
 	int32 PlayerNum = 2;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|Value")
+	int32 AINum = 2;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Value")
 	int32 InitCardNum = 4;

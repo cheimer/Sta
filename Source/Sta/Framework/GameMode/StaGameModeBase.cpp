@@ -4,9 +4,13 @@
 #include "StaGameModeBase.h"
 
 #include "Area/AreaBase.h"
+#include "Character/AIPawn.h"
 #include "Controller/StaPlayerController.h"
 #include "Framework/GameState/StaGameState.h"
-#include "Player/CommandPawn.h"
+#include "Character/CommandPawn.h"
+#include "Controller/StaAIController.h"
+#include "DataAsset/AIStyleData.h"
+#include "DataAsset/CardData.h"
 #include "Framework/PlayerState/StaPlayerState.h"
 #include "Helper/StaHelper.h"
 #include "Kismet/GameplayStatics.h"
@@ -26,11 +30,6 @@ void AStaGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (bIsSinglePlay)
-	{
-		//PlayerNum = 1;
-	}
-
 }
 
 void AStaGameModeBase::PostLogin(APlayerController* NewPlayer)
@@ -48,16 +47,73 @@ void AStaGameModeBase::PostLogin(APlayerController* NewPlayer)
 
 		if (CurrentTeamNum == PlayerNum)
 		{
-			InitAreaState();
+			GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::StartGameSettings);
 		}
 	}
 }
 
-void AStaGameModeBase::InitDeckState(const TArray<FCardInfo>& DeckList, APlayerController* PC)
+void AStaGameModeBase::StartGameSettings()
 {
-	if (PlayerDeckState.Contains(PC)) return;
+	SpawnAIPawns();
+	InitAreaState();
+}
 
-	FPlayerDeckState DeckState;
+void AStaGameModeBase::SpawnAIPawns()
+{
+	if (!AIPawnClass || !AIControllerClass || !GetWorld()) return;
+
+	for (int i = 0; i < AINum; i++)
+	{
+		AStaAIController* SpawnedAIController = GetWorld()->SpawnActor<AStaAIController>(AIControllerClass);
+		if (!SpawnedAIController || !SpawnedAIController->GetDeckData()) continue;
+
+		IGenericTeamAgentInterface* TeamAgentInterface = Cast<IGenericTeamAgentInterface>(SpawnedAIController->GetPlayerState<APlayerState>());
+		if (!TeamAgentInterface) continue;
+		
+		AAIPawn* SpawnedAI = GetWorld()->SpawnActor<AAIPawn>(AIPawnClass);
+		if(!SpawnedAI) continue;
+
+		FGenericTeamId NewTeamId(CurrentTeamNum);
+		TeamAgentInterface->SetGenericTeamId(NewTeamId);
+
+		CurrentTeamNum++;
+
+		SpawnedAIController->Possess(SpawnedAI);
+		InitDeckState(SpawnedAIController->GetDeckData()->DeckList, SpawnedAIController);
+		
+	}
+}
+
+void AStaGameModeBase::InitAreaState()
+{
+	if (!GetGameState<AGameStateBase>()) return;
+	
+	//TODO: Temp Area Assign
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAreaBase::StaticClass(), FoundActors);
+
+	int j = 0;
+	for (int i = 0; i < GetGameState<AGameStateBase>()->PlayerArray.Num(); i++)
+	{
+		for (; j < FoundActors.Num(); j++)
+		{
+			if (AAreaBase* Area = Cast<AAreaBase>(FoundActors[j]))
+			{
+				if (Area->GetGenericTeamId() == FGenericTeamId::NoTeam)
+				{
+					Area->SetGenericTeamId(i);
+					break;
+				}
+			}
+		}
+	}
+}
+
+void AStaGameModeBase::InitDeckState(const TArray<FCardInfo>& DeckList, AController* Controller)
+{
+	if (DeckStates.Contains(Controller)) return;
+
+	FDeckState DeckState;
 	for (FCardInfo CardInfo : DeckList)
 	{
 		for (int i = 0; i < CardInfo.CardNum; i++)
@@ -67,67 +123,43 @@ void AStaGameModeBase::InitDeckState(const TArray<FCardInfo>& DeckList, APlayerC
 	}
 	
 	ShuffleDeck(DeckState.DeckCards);
-	PlayerDeckState.Emplace(PC, DeckState);
+	DeckStates.Emplace(Controller, DeckState);
 
 	for (int i = 0; i < InitCardNum; i++)
 	{
-		DrawCard(PC);
+		DrawCard(Controller);
 	}
 }
 
-void AStaGameModeBase::InitAreaState()
+bool AStaGameModeBase::CanDrawCard(const AController* Controller)
 {
-	//TODO: Temp Area Assign
-	TArray<AActor*> FoundActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAreaBase::StaticClass(), FoundActors);
+	if (!Controller) return false;
 
-	int IterIndex = 0;
-	for (FConstPlayerControllerIterator PCIter = GetWorld()->GetPlayerControllerIterator(); PCIter; ++PCIter)
-	{
-		for (AActor* FoundActor : FoundActors)
-		{
-			if (AAreaBase* Area = Cast<AAreaBase>(FoundActor))
-			{
-				if (Area->GetGenericTeamId() == FGenericTeamId::NoTeam)
-				{
-					Area->SetGenericTeamId(IterIndex);
-					IterIndex++;
-					break;
-				}
-			}
-		}
-	}
-}
-
-bool AStaGameModeBase::CanDrawCard(APlayerController* PC)
-{
-	if (!PC) return false;
-
-	FPlayerDeckState* DeckState = PlayerDeckState.Find(PC);
+	FDeckState* DeckState = DeckStates.Find(Controller);
 	if (!DeckState) return false;
 
 	return DeckState->HandCards.Num() < MaxCardNum;
 }
 
-bool AStaGameModeBase::CardInHand(APlayerController* PC, const UCardData* CardData)
+bool AStaGameModeBase::CardInHand(const AController* Controller, const UCardData* CardData)
 {
-	if (!PC) return false;
+	if (!Controller) return false;
 	
-	FPlayerDeckState* DeckState = PlayerDeckState.Find(PC);
+	FDeckState* DeckState = DeckStates.Find(Controller);
 	if (!DeckState) return false;
 
 	return DeckState->HandCards.Contains(CardData);
 }
 
-void AStaGameModeBase::DrawCard(APlayerController* PC)
+void AStaGameModeBase::DrawCard(AController* Controller)
 {
-	AStaPlayerController* StaPC = Cast<AStaPlayerController>(PC);
+	AStaPlayerController* StaPC = Cast<AStaPlayerController>(Controller);
 	if (!StaPC) return;
 
-	FPlayerDeckState* DeckState = PlayerDeckState.Find(PC);
+	FDeckState* DeckState = DeckStates.Find(Controller);
 	if (!DeckState) return;
 
-	if (!CanDrawCard(PC)) return;
+	if (!CanDrawCard(Controller)) return;
 
 	if (DeckState->DeckCards.Num() == 0)
 	{
@@ -148,15 +180,15 @@ void AStaGameModeBase::DrawCard(APlayerController* PC)
 	
 }
 
-void AStaGameModeBase::DiscardCard(APlayerController* PC, const UCardData* CardData)
+void AStaGameModeBase::DiscardCard(AController* Controller, const UCardData* CardData)
 {
-	AStaPlayerController* StaPC = Cast<AStaPlayerController>(PC);
+	AStaPlayerController* StaPC = Cast<AStaPlayerController>(Controller);
 	if (!StaPC) return;
 	
-	FPlayerDeckState* DeckState = PlayerDeckState.Find(PC);
+	FDeckState* DeckState = DeckStates.Find(Controller);
 	if (!DeckState) return;
 	
-	if (!CardInHand(PC, CardData)) return;
+	if (!CardInHand(Controller, CardData)) return;
 
 	DeckState->DiscardCards.Add(CardData);
 	DeckState->HandCards.RemoveSingle(CardData);

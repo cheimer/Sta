@@ -4,25 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "DataAsset/CardData.h"
 #include "CardComponent.generated.h"
 
 class ADiscardCard;
 class UCardData;
 class ACardBase;
-
-USTRUCT()
-struct FCardInfo
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere, Category = "Sta|CardInfo")
-	TObjectPtr<UCardData> CardData = nullptr;
-
-	UPROPERTY(EditAnywhere, Category = "Sta|CardInfo")
-	int32 CardNum = 1;
-	
-};
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STA_API UCardComponent : public USceneComponent

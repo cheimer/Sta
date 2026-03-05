@@ -58,11 +58,6 @@ void ACommandPawn::BeginPlay()
 
 	MapInfo = AMapInfo::GetInstance(GetWorld());
 
-	if (bIsUpperTeam)
-	{
-		SpringArmComponent->SetRelativeRotation(FRotator(-70.0f, 180.0f, 0.0f));
-	}
-
 }
 
 void ACommandPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -107,11 +102,6 @@ void ACommandPawn::OnRep_PlayerState()
 
 void ACommandPawn::MoveTo(FVector Direction)
 {
-	if (bIsUpperTeam)
-	{
-		Direction *= -1.0f;
-	}
-	
 	FVector2D NextLocation = FVector2D(GetActorLocation() + Direction * MapMoveSensitive);
 	if (MapInfo->IsOutMap(NextLocation))
 	{

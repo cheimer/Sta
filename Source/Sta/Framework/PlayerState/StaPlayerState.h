@@ -30,20 +30,6 @@ public:
 	void GiveDefaultAbilities();
 	void ApplyDefaultEffects();
 
-	/**
-	 * AbilitySystemInterface
-	 * @return ASC
-	 */
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	
-	UPlayerAttributeSet* GetAttributeSet() const;
-	
-	/**
-	 * GenericTeamAgentInterface
-	 */
-	virtual void SetGenericTeamId(const FGenericTeamId& TeamID) override;
-	virtual FGenericTeamId GetGenericTeamId() const override;
-
 protected:
 	virtual void BeginPlay() override;
 
@@ -70,5 +56,20 @@ private:
 	FGenericTeamId PlayerTeamID;
 
 	float RecentChargeDrawTime = -1.0f;
+
+public:
+	/**
+	 * AbilitySystemInterface
+	 * @return ASC
+	 */
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
+	UPlayerAttributeSet* GetAttributeSet() const;
+	
+	/**
+	 * GenericTeamAgentInterface
+	 */
+	virtual void SetGenericTeamId(const FGenericTeamId& TeamID) override;
+	virtual FGenericTeamId GetGenericTeamId() const override;
+
 };

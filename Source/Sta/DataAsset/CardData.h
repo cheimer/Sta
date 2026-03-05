@@ -10,6 +10,7 @@
 class ACardBase;
 class UCardTargeting;
 class UGameplayEffect;
+class UCardData;
 
 USTRUCT(BlueprintType)
 struct FCardModifier
@@ -21,6 +22,19 @@ struct FCardModifier
 
 	UPROPERTY(EditDefaultsOnly)
 	float Value = 0.0f;
+	
+};
+
+USTRUCT()
+struct FCardInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Sta|CardInfo")
+	TObjectPtr<UCardData> CardData = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Sta|CardInfo")
+	int32 CardNum = 1;
 	
 };
 

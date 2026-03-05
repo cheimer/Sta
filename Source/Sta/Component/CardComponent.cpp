@@ -11,7 +11,7 @@
 #include "DataAsset/CardData.h"
 #include "GameplayTag/StaTags.h"
 #include "Helper/StaHelper.h"
-#include "Player/CommandPawn.h"
+#include "Character/CommandPawn.h"
 
 
 UCardComponent::UCardComponent()

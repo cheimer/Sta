@@ -33,10 +33,10 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UVerticalBox* ButtonContainer;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Class")
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|Class")
 	TSubclassOf<UOrderEntryWidget> OrderEntryClass;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Class")
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|Class")
 	TSubclassOf<UInfoWidget> InfoWidgetClass;
 
 private:

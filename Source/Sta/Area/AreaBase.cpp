@@ -11,9 +11,11 @@
 #include "AbilitySystem/AttributeSet/AreaAttributeSet.h"
 #include "Components/TextRenderComponent.h"
 #include "FunctionLibrary/AreaCalc.h"
+#include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerState.h"
 #include "GameplayTag/StaTags.h"
 #include "Helper/StaHelper.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -74,7 +76,8 @@ void AAreaBase::BeginPlay()
 		
 	}
 
-	SetAreaMaterialColor(NeutralColor);
+	check(TeamPaletteData);
+	SetAreaMaterialColor(TeamPaletteData->GetDefaultColor());
 	SetTextRenderComponent();
 }
 
@@ -207,20 +210,12 @@ void AAreaBase::OnRep_OwningState()
 {
 	if (!OwningState.IsValid() || !GetWorld()->GetFirstPlayerController() || !GetWorld()->GetFirstPlayerController()->PlayerState)
 	{
-		SetAreaMaterialColor(NeutralColor);
+		SetAreaMaterialColor(TeamPaletteData->GetDefaultColor());
 		return;
 	}
 
-	if (GetWorld()->GetFirstPlayerController()->PlayerState == OwningState)
-	{
-		SetAreaMaterialColor(FriendlyColor);
-		SetTextRenderComponent();
-	}
-	else
-	{
-		SetAreaMaterialColor(HostileColor);
-		SetTextRenderComponent();
-	}
+	SetAreaMaterialColor(TeamPaletteData->GetColorByTeamId(GetGenericTeamId()));
+	SetTextRenderComponent();
 
 }
 
@@ -247,7 +242,7 @@ void AAreaBase::SetTextRenderComponent()
 	if (!OwningState.IsValid() || !GetWorld()->GetFirstPlayerController() || !GetWorld()->GetFirstPlayerController()->PlayerState)
 	{
 		TextRenderComponent->SetText(FText::GetEmpty());
-		TextRenderComponent->SetTextRenderColor(NeutralColor.ToFColor(true));
+		TextRenderComponent->SetTextRenderColor(TeamPaletteData->GetDefaultColor().ToFColor(true));
 		return;
 	}
 	
@@ -255,20 +250,13 @@ void AAreaBase::SetTextRenderComponent()
 	if (!StateTeamID || GetGenericTeamId() == FGenericTeamId::NoTeam)
 	{
 		TextRenderComponent->SetText(FText::GetEmpty());
-		TextRenderComponent->SetTextRenderColor(NeutralColor.ToFColor(true));
+		TextRenderComponent->SetTextRenderColor(TeamPaletteData->GetDefaultColor().ToFColor(true));
 		return;
 	}
 	
 	TextRenderComponent->SetText(GetSimpleInfoText(StateTeamID->GetGenericTeamId()));
-	
-	if (StateTeamID->GetGenericTeamId() == GetGenericTeamId())
-	{
-		TextRenderComponent->SetTextRenderColor(FriendlyColor.ToFColor(true));
-	}
-	else
-	{
-		TextRenderComponent->SetTextRenderColor(HostileColor.ToFColor(true));
-	}
+	TextRenderComponent->SetTextRenderColor(
+		TeamPaletteData->GetColorByTeamId(GetGenericTeamId()).ToFColor(true));
 	
 }
 
@@ -388,18 +376,21 @@ UAreaAttributeSet* AAreaBase::GetAttributeSet() const
  */
 void AAreaBase::SetGenericTeamId(const FGenericTeamId& TeamID)
 {
-	TArray<AActor*> FoundActors;
-	for (FConstPlayerControllerIterator PCIter = GetWorld()->GetPlayerControllerIterator(); PCIter; ++PCIter)
+	if (!HasAuthority()) return;
+	
+	for (APlayerState* PlayerState : UGameplayStatics::GetGameState(GetWorld())->PlayerArray)
 	{
-		IGenericTeamAgentInterface* PlayerTeam  = Cast<IGenericTeamAgentInterface>(PCIter->Get()->PlayerState);
-		if (!PlayerTeam) continue;
+		if (!PlayerState) continue;
+		IGenericTeamAgentInterface* TeamAgentInterface  = Cast<IGenericTeamAgentInterface>(PlayerState);
+		if (!TeamAgentInterface) continue;
 
-		if (PlayerTeam->GetGenericTeamId() == TeamID)
+		if (TeamAgentInterface->GetGenericTeamId() == TeamID)
 		{
-			OwningState = Cast<APlayerState>(PCIter->Get()->PlayerState);
+			OwningState = PlayerState;
 			break;
 		}
 	}
+
 	
 }
 

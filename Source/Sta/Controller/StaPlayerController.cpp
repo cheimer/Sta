@@ -7,17 +7,13 @@
 #include "AbilitySystemComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "AbilitySystem/StaAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSet/AreaAttributeSet.h"
 #include "Area/AreaBase.h"
 #include "Component/CardComponent.h"
 #include "Framework/GameMode/StaGameModeBase.h"
 #include "GameFramework/PlayerState.h"
-#include "Helper/StaHelper.h"
 #include "Interface/Interactable.h"
-#include "Kismet/GameplayStatics.h"
-#include "Net/UnrealNetwork.h"
-#include "Player/CommandPawn.h"
+#include "Character/CommandPawn.h"
 #include "UI/StaHUD.h"
 
 AStaPlayerController::AStaPlayerController()

@@ -61,9 +61,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	UCardComponent* CardComponent;
 
-	UPROPERTY(EditAnywhere, Category = "Sta|Test")
-	bool bIsUpperTeam = false;
-	
 private:
 	UPROPERTY(EditAnywhere, Category = "Sta|Input")
 	float ScrollSensitive = 20.0f;

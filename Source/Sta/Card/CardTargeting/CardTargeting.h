@@ -31,7 +31,7 @@ public:
 protected:
 	virtual bool IsTargetPassFilter(const FGameplayAbilityActorInfo* ActorInfo, AActor* TargetActor);
 	
-	UPROPERTY(EditAnywhere, Category = "Targeting")
+	UPROPERTY(EditAnywhere, Category = "Sta|Targeting")
 	ETargetFilter TargetFilter = ETargetFilter::Any;
 	
 };

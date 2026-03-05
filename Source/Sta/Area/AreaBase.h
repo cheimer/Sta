@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
 #include "GenericTeamAgentInterface.h"
+#include "DataAsset/TeamPaletteData.h"
 #include "GameFramework/Actor.h"
 #include "Interface/Interactable.h"
 #include "AreaBase.generated.h"
@@ -59,23 +60,6 @@ public:
 	virtual const TArray<FInteractOption>& GetInteractOptions(FGenericTeamId Interactor) override;
 	virtual FText GetInfoText(FGenericTeamId Interactor = FGenericTeamId::NoTeam) override;
 
-	/**
-	 * AbilitySystemInterface
-	 */
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	UAreaAttributeSet* GetAttributeSet() const;
-
-	/**
-	 * GenericTeamAgentInterface
-	 */
-	virtual void SetGenericTeamId(const FGenericTeamId& TeamID) override;
-	virtual FGenericTeamId GetGenericTeamId() const override;
-
-	/**
-	 * Get/Set Func
-	 */
-	APlayerState* GetOwningState() const {return OwningState.Get();}
-
 protected:
 	virtual void BeginPlay() override;
 
@@ -99,27 +83,23 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Component")
 	UStaticMeshComponent* AreaMesh;
 
-	UPROPERTY(EditAnywhere, Category = "VFX")
+	UPROPERTY(EditAnywhere, Category = "Sta|VFX")
 	UNiagaraSystem* HighlightVFX;
 
-	UPROPERTY(EditAnywhere, Category = "VFX")
+	UPROPERTY(EditAnywhere, Category = "Sta|VFX")
 	FVector HighlightSpawnLocation = FVector(0.0f, 0.0f, 30.0f);
 
 	UPROPERTY(EditAnywhere, Category = "Component")
 	UTextRenderComponent* TextRenderComponent;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "GameplayEffect")
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|GameplayEffect")
 	TSubclassOf<UGameplayEffect> UnitChangeEffectClass;
 
 private:
 	void SetInteractOptions();
 
-	UPROPERTY(EditAnywhere, Category = "VFX")
-	FLinearColor NeutralColor = FLinearColor::White;
-	UPROPERTY(EditAnywhere, Category = "VFX")
-	FLinearColor HostileColor = FLinearColor::Red;
-	UPROPERTY(EditAnywhere, Category = "VFX")
-	FLinearColor FriendlyColor = FLinearColor::Blue;
+	UPROPERTY(EditAnywhere, Category = "Sta|VFX")
+	UTeamPaletteData* TeamPaletteData;
 	
 	TArray<FInteractOption> FriendOptions;
 	TArray<FInteractOption> HostileOptions;
@@ -131,5 +111,23 @@ private:
 	UNiagaraComponent* SpawnedHighlight;
 
 	float LastScanTime = -1.0f;
+
+public:
+	/**
+	 * AbilitySystemInterface
+	 */
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	UAreaAttributeSet* GetAttributeSet() const;
+
+	/**
+	 * GenericTeamAgentInterface
+	 */
+	virtual void SetGenericTeamId(const FGenericTeamId& TeamID) override;
+	virtual FGenericTeamId GetGenericTeamId() const override;
+
+	/**
+	 * Get/Set Func
+	 */
+	APlayerState* GetOwningState() const {return OwningState.Get();}
 
 };
