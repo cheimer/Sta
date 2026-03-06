@@ -251,7 +251,34 @@ void AStaPlayerController::ServerInitDeck_Implementation(const TArray<FCardInfo>
 void AStaPlayerController::SetControllerState(FGameplayTag NewStateTag, const TArray<FInteractOption>& NewOptions)
 {
 	OnControllerStateChanged.Broadcast(StateTag, NewStateTag, NewOptions);
+
+	if(StateTag == StaTags::State::Controller::Targeting)
+	{
+		if (RecentInteractActor.IsValid())
+		{
+			SetConnectedAreasHighlight(RecentInteractActor.Get(), false);
+		}
+	}
+	else if (StateTag == StaTags::State::Controller::Menu)
+	{
+		if (NewStateTag == StaTags::State::Controller::Idle)
+		{
+			if (RecentInteractActor.IsValid())
+			{
+				SetConnectedAreasHighlight(RecentInteractActor.Get(), false);
+			}
+		}
+	}
+	
 	StateTag = NewStateTag;
+
+	if (StateTag == StaTags::State::Controller::Targeting)
+	{
+		if (RecentInteractActor.IsValid())
+		{
+			SetConnectedAreasHighlight(RecentInteractActor.Get(), true);
+		}
+	}
 }
 
 void AStaPlayerController::SetControllerIdle()
@@ -263,10 +290,6 @@ void AStaPlayerController::SetControllerTargeting()
 {
 	SetControllerState(StaTags::State::Controller::Targeting);
 
-	if (RecentInteractActor.IsValid())
-	{
-		SetConnectedAreasHighlight(RecentInteractActor.Get(), true);
-	}
 }
 
 void AStaPlayerController::ScanInteractingArea()
@@ -279,9 +302,51 @@ void AStaPlayerController::ScanInteractingArea()
 	AreaArray->TargetActorArray.Add(RecentInteractActor.Get());
 		
 	ScanEventData.TargetData.Add(AreaArray);
-		
+	
 	TriggerGameplayEvent(StaTags::Event::Area::Scan, &ScanEventData);
 		
+}
+
+void AStaPlayerController::MoveUnit(const float UnitNum)
+{
+	if (!RecentInteractActor.IsValid() || !RecentTargetActor.IsValid()) return;
+	
+	UAbilitySystemComponent* InteractActorASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(RecentInteractActor.Get());
+	if (!InteractActorASC) return;
+
+	FGameplayEventData MoveEventData;
+	
+	FGameplayAbilityTargetData_ActorArray* AreaArray = new FGameplayAbilityTargetData_ActorArray();
+	AreaArray->TargetActorArray.Add(RecentInteractActor.Get());
+	AreaArray->TargetActorArray.Add(RecentTargetActor.Get());
+	
+	MoveEventData.TargetData.Add(AreaArray);
+	MoveEventData.EventMagnitude = UnitNum;
+
+	IGenericTeamAgentInterface* RecentInteractTeam = Cast<IGenericTeamAgentInterface>(RecentInteractActor);
+	IGenericTeamAgentInterface* RecentTargetTeam = Cast<IGenericTeamAgentInterface>(RecentTargetActor);
+	if (RecentInteractTeam->GetGenericTeamId() == RecentTargetTeam->GetGenericTeamId())
+	{
+		TriggerGameplayEvent(StaTags::Event::Area::Move, &MoveEventData);
+	}
+	else
+	{
+		TriggerGameplayEvent(StaTags::Event::Area::Attack, &MoveEventData);
+	}
+	
+	SetConnectedAreasHighlight(RecentInteractActor.Get(), false);
+
+	SetControllerIdle();
+}
+
+float AStaPlayerController::GetInteractAreaUnitNum()
+{
+	if (!RecentInteractActor.IsValid()) return 0.0f;
+
+	AAreaBase* InteractArea = Cast<AAreaBase>(RecentInteractActor);
+	if (!InteractArea) return 0.0f;
+
+	return InteractArea->GetAttributeSet()->GetUnitNum();
 }
 
 void AStaPlayerController::SetConnectedAreasHighlight(AActor* RootArea, const bool bIsHighlight)
@@ -374,57 +439,49 @@ void AStaPlayerController::InteractEnd(const FInputActionValue& Value)
 				break;
 			}
 		}
-
 		if (!bIsCorrectArea) return;
 
-		UAbilitySystemComponent* InteractActorASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(RecentInteractActor.Get());
-		if (!InteractActorASC) return;
-
-		FGameplayEventData MoveEventData;
-		
-		FGameplayAbilityTargetData_ActorArray* AreaArray = new FGameplayAbilityTargetData_ActorArray();
-		AreaArray->TargetActorArray.Add(RecentInteractActor.Get());
-		AreaArray->TargetActorArray.Add(HoveredActor.Get());
-		
-		MoveEventData.TargetData.Add(AreaArray);
-		//TODO: Temp move all
-		MoveEventData.EventMagnitude = InteractActorASC->GetNumericAttribute(UAreaAttributeSet::GetUnitNumAttribute());
-
-		if (RecentArea->GetGenericTeamId() == HoveredArea->GetGenericTeamId())
-		{
-			TriggerGameplayEvent(StaTags::Event::Area::Move, &MoveEventData);
-		}
-		else
-		{
-			TriggerGameplayEvent(StaTags::Event::Area::Attack, &MoveEventData);
-		}
-		
-		SetConnectedAreasHighlight(RecentInteractActor.Get(), false);
-
-		SetControllerIdle();
+		RecentTargetActor = HoveredActor;
 	}
-	else
-	{
-		FGenericTeamId OwningTeamId = FGenericTeamId::NoTeam;
-		if (IGenericTeamAgentInterface* StateTeamID = Cast<IGenericTeamAgentInterface>(PlayerState))
-		{
-			OwningTeamId = StateTeamID->GetGenericTeamId();
-		}
-		const TArray<FInteractOption>& Options = InteractableActor->GetInteractOptions(OwningTeamId);
-		if (Options.IsEmpty()) return;
 	
-		InteractableActor->OnInteractEnd(HitResult);
+	FGenericTeamId OwningTeamId = FGenericTeamId::NoTeam;
+	if (IGenericTeamAgentInterface* StateTeamID = Cast<IGenericTeamAgentInterface>(PlayerState))
+	{
+		OwningTeamId = StateTeamID->GetGenericTeamId();
+	}
+	
+	const TArray<FInteractOption>& Options = InteractableActor->GetInteractOptions(OwningTeamId);
+	if (Options.IsEmpty()) return;
 
-		if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Card_Root) && StateTag.MatchesTagExact(StaTags::State::Controller::Drag))
+	InteractableActor->OnInteractEnd(HitResult);
+
+	if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Card_Root))
+	{
+		if (StateTag.MatchesTagExact(StaTags::State::Controller::Drag))
 		{
 			SetControllerState(StaTags::State::Controller::Idle, Options);
 		}
-		else if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Area_Root) && StateTag.MatchesTagExact(StaTags::State::Controller::Idle))
+	}
+	else if (Options[0].InteractTag.MatchesTag(StaTags::Interaction::Area_Root))
+	{
+		if (StateTag.MatchesTagExact(StaTags::State::Controller::Idle))
 		{
 			SetControllerState(StaTags::State::Controller::Menu, Options);
 		}
-		
+		else if (StateTag.MatchesTagExact(StaTags::State::Controller::Targeting))
+		{
+			if (IInteractable* BeforeInteract = Cast<IInteractable>(RecentInteractActor))
+			{
+				const TArray<FInteractOption>& BeforeInteractOptions = BeforeInteract->GetInteractOptions(OwningTeamId);
+				if (Options.IsEmpty()) return;
+				
+				SetControllerState(StaTags::State::Controller::Menu, BeforeInteractOptions);
+				
+			}
+		}
 	}
+	
+	
 }
 
 void AStaPlayerController::Cancel(const FInputActionValue& Value)
@@ -436,11 +493,6 @@ void AStaPlayerController::Cancel(const FInputActionValue& Value)
 	if (StateTag == StaTags::State::Controller::Targeting)
 	{
 		SetControllerState(StaTags::State::Controller::Idle);
-
-		if (RecentInteractActor.IsValid())
-		{
-			SetConnectedAreasHighlight(RecentInteractActor.Get(), false);
-		}
 	}
 }
 

@@ -13,6 +13,7 @@
 #include "PopUp/InfoWidget.h"
 #include "PopUp/OrderListWidget.h"
 #include "PopUp/PopUpWidget.h"
+#include "PopUp/UnitConfirmWidget.h"
 
 void AStaHUD::BeginPlay()
 {
@@ -71,28 +72,67 @@ void AStaHUD::HandleControllerStateChanged(FGameplayTag BeforeState, FGameplayTa
 	if (AfterState.MatchesTagExact(StaTags::State::Controller::Menu))
 	{
 		FVector2D WidgetLocation;
-		APlayerController* OwningPC = GetOwningPlayerController();
+		AStaPlayerController* OwningPC = Cast<AStaPlayerController>(GetOwningPlayerController());
 		if (!OwningPC) return;
 
-		OwningPC->GetMousePosition(WidgetLocation.X, WidgetLocation.Y);
+		// Idle to Menu
+		if (BeforeState.MatchesTagExact(StaTags::State::Controller::Idle))
+		{
+			OwningPC->GetMousePosition(WidgetLocation.X, WidgetLocation.Y);
+			
+			UPopUpWidget* NewPopUpWidget = UPopUpWidget::Create(GetWorld(), AreaOrderWidgetClass, NewOptions, WidgetLocation, MenuWidgets.Num() + 1);
+			if (!NewPopUpWidget) return;
+
+			if (UOrderListWidget* NewOrderWidget = Cast<UOrderListWidget>(NewPopUpWidget))
+			{
+				NewOrderWidget->OnOrderSelected.BindUObject(this, &ThisClass::HandleOrderSelected);
+			}
+
+			MenuWidgets.Add(NewPopUpWidget);
+		}
+
+		// Targeting to Menu
+		else if (BeforeState.MatchesTagExact(StaTags::State::Controller::Targeting))
+		{
+			UPopUpWidget* NewPopUpWidget = UPopUpWidget::Create(GetWorld(), AreaUnitConfirmWidgetClass, NewOptions, FVector2D::Zero(), MenuWidgets.Num() + 1);
+			if (!NewPopUpWidget) return;
+			
+			NewPopUpWidget->SetAnchorsInViewport(FAnchors(0.5f, 0.5f));
+			NewPopUpWidget->SetAlignmentInViewport(FVector2D(0.5f, 0.5f));
+			
+			if (UUnitConfirmWidget* NewUnitConfirmWidget = Cast<UUnitConfirmWidget>(NewPopUpWidget))
+			{
+				NewUnitConfirmWidget->SetUp(OwningPC->GetRecentTargetActor(), OwningPC->GetInteractAreaUnitNum());
+				NewUnitConfirmWidget->OnCancelClicked.BindUObject(this, &ThisClass::HandleControllerCanceled);
+				NewUnitConfirmWidget->OnConfirmClicked.BindLambda([this, OwningPC](float UnitNum)
+				{
+					if (!OwningPC) return;
+					
+					while (!MenuWidgets.IsEmpty())
+					{
+						UUserWidget* PopWidget = MenuWidgets.Pop();
+						if (!PopWidget) continue;
+						
+						PopWidget->RemoveFromParent();
+					}
 		
-		UPopUpWidget* NewPopUpWidget = UPopUpWidget::Create(GetWorld(), AreaOrderWidgetClass, NewOptions, WidgetLocation, MenuWidgets.Num() + 1);
-		if (!NewPopUpWidget) return;
+					OwningPC->MoveUnit(UnitNum);
+				});
+			}
 
-		if (UOrderListWidget* NewOrderWidget = Cast<UOrderListWidget>(NewPopUpWidget))
-		{
-			NewOrderWidget->OnOrderSelected.BindUObject(this, &ThisClass::HandleOrderSelected);
+			MenuWidgets.Add(NewPopUpWidget);
 		}
-
-		MenuWidgets.Add(NewPopUpWidget);
 	}
-	else if (BeforeState.MatchesTagExact(StaTags::State::Controller::Menu) && !AfterState.MatchesTagExact(StaTags::State::Controller::Menu))
+	else
 	{
-		for (UUserWidget* MenuWidget : MenuWidgets)
+		if (BeforeState.MatchesTagExact(StaTags::State::Controller::Menu))
 		{
-			MenuWidget->RemoveFromParent();
+			for (UUserWidget* MenuWidget : MenuWidgets)
+			{
+				MenuWidget->RemoveFromParent();
+			}
+			MenuWidgets.Empty();
 		}
-		MenuWidgets.Empty();
 	}
 }
 
@@ -144,7 +184,7 @@ void AStaHUD::HandleOrderSelected(FGameplayTag SelectedTag)
 			PlayerController->GetMousePosition(WidgetLocation.X, WidgetLocation.Y);
 		
 			UPopUpWidget* NewPopUpWidget = UPopUpWidget::Create(GetWorld(), TopWidget->GetInfoWidgetClass(),
-			TopWidget->GetOptions(), WidgetLocation, MenuWidgets.Num() + 1);
+				TopWidget->GetOptions(), WidgetLocation, MenuWidgets.Num() + 1);
 			
 			TopWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
 			MenuWidgets.Add(NewPopUpWidget);

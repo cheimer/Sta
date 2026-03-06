@@ -59,6 +59,9 @@ public:
 	void SetControllerIdle();
 	void SetControllerTargeting();
 	void ScanInteractingArea();
+	void MoveUnit(const float UnitNum);
+
+	float GetInteractAreaUnitNum();
 
 	void TriggerGameplayEvent(FGameplayTag GameplayTag, const FGameplayEventData* EventData);
 	
@@ -136,9 +139,16 @@ private:
 	UPROPERTY(Transient)
 	TWeakObjectPtr<AActor> RecentInteractActor;
 
+	UPROPERTY(Transient)
+	TWeakObjectPtr<AActor> RecentTargetActor;
+
 	bool bHUDBounding = false;
 	bool bInitDeckList = false;
 
 	FGameplayTag StateTag = StaTags::State::Controller::Idle;
+	
+public:
+	AActor* GetRecentInteractActor() const {return RecentInteractActor.Get();}
+	AActor* GetRecentTargetActor() const {return RecentTargetActor.Get();}
 
 };

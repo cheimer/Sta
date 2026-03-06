@@ -26,6 +26,8 @@ struct FInteractOption
 	UPROPERTY(EditAnywhere, Meta = (Categories = "Interaction"))
 	FGameplayTag InteractTag;
 
+	FLinearColor DisplayColor = FLinearColor::Black;
+	
 	TWeakObjectPtr<AActor> TargetActor;
 
 };

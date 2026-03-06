@@ -46,6 +46,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Widget")
 	TSubclassOf<UPopUpWidget> AreaOrderWidgetClass;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|Widget")
+	TSubclassOf<UPopUpWidget> AreaUnitConfirmWidgetClass;
+
 	UPROPERTY(Transient)
 	UPlayWidget* CurrentWidget;
 

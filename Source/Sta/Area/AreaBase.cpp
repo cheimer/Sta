@@ -135,6 +135,18 @@ void AAreaBase::SetInteractOptions()
 	
 }
 
+void AAreaBase::UpdateInteractOptions()
+{
+	for (FInteractOption& Option : FriendOptions)
+	{
+		Option.DisplayColor = TeamPaletteData->GetColorByTeamId(GetGenericTeamId());
+	}
+	for (FInteractOption& Option : HostileOptions)
+	{
+		Option.DisplayColor = TeamPaletteData->GetColorByTeamId(GetGenericTeamId());
+	}
+}
+
 void AAreaBase::AttackedBy(AAreaBase* Attacker, const float AttackUnitNum)
 {
 	if (!Attacker || !Attacker->GetOwningState() || !GetAbilitySystemComponent() || !GetAttributeSet()) return;
@@ -166,6 +178,8 @@ void AAreaBase::AttackedBy(AAreaBase* Attacker, const float AttackUnitNum)
 		
 		GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*DamageSpec.Data.Get());
 	}
+
+	UpdateInteractOptions();
 
 }
 
@@ -216,6 +230,7 @@ void AAreaBase::OnRep_OwningState()
 
 	SetAreaMaterialColor(TeamPaletteData->GetColorByTeamId(GetGenericTeamId()));
 	SetTextRenderComponent();
+	UpdateInteractOptions();
 
 }
 
@@ -258,30 +273,6 @@ void AAreaBase::SetTextRenderComponent()
 	TextRenderComponent->SetTextRenderColor(
 		TeamPaletteData->GetColorByTeamId(GetGenericTeamId()).ToFColor(true));
 	
-}
-
-FText AAreaBase::GetSimpleInfoText(FGenericTeamId Interactor)
-{
-	if (!GetAttributeSet()) return FText();
-	
-	if (GetGenericTeamId() == Interactor)
-	{
-		return FText::FromString(FString::Printf(TEXT("Unit : %d(%d)\nDef : %.1f(%.1f)"),
-			FMath::RoundToInt(GetAttributeSet()->GetUnitNum()),
-			FMath::RoundToInt(UAreaCalc::CalcBluffUnit(this)),
-			GetAttributeSet()->GetDefense(),
-			UAreaCalc::CalcBluffDefense(this)
-			));
-	}
-	else
-	{
-		FString InfoString = FString::Printf(TEXT("Unit : %d\nDef : x%.1f"),
-			FMath::RoundToInt(GetAttributeSet()->GetUnitNum()),
-			GetAttributeSet()->GetDefense()
-			);
-
-		return FText::FromString(InfoString);
-	}
 }
 
 void AAreaBase::SetLastScanTime()
@@ -353,6 +344,30 @@ FText AAreaBase::GetInfoText(FGenericTeamId Interactor)
 			InfoString += FString::Printf(TEXT("\nLast Scan : %lld seconds age"),
 				FMath::FloorToInt(FMath::Clamp(GetWorld()->GetUnpausedTimeSeconds() - GetLastScanTime(), 0.0f, 99.0f)));
 		}
+
+		return FText::FromString(InfoString);
+	}
+}
+
+FText AAreaBase::GetSimpleInfoText(FGenericTeamId Interactor)
+{
+	if (!GetAttributeSet()) return FText();
+	
+	if (GetGenericTeamId() == Interactor)
+	{
+		return FText::FromString(FString::Printf(TEXT("Unit : %d(%d)\nDef : %.1f(%.1f)"),
+			FMath::RoundToInt(GetAttributeSet()->GetUnitNum()),
+			FMath::RoundToInt(UAreaCalc::CalcBluffUnit(this)),
+			GetAttributeSet()->GetDefense(),
+			UAreaCalc::CalcBluffDefense(this)
+			));
+	}
+	else
+	{
+		FString InfoString = FString::Printf(TEXT("Unit : %d\nDef : x%.1f"),
+			FMath::RoundToInt(GetAttributeSet()->GetUnitNum()),
+			GetAttributeSet()->GetDefense()
+			);
 
 		return FText::FromString(InfoString);
 	}

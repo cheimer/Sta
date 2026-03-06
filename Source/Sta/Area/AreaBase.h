@@ -97,6 +97,7 @@ protected:
 
 private:
 	void SetInteractOptions();
+	void UpdateInteractOptions();
 
 	UPROPERTY(EditAnywhere, Category = "Sta|VFX")
 	UTeamPaletteData* TeamPaletteData;
