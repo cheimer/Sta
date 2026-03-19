@@ -37,7 +37,7 @@ void UGameplayAbilityDiscardCard::ActivateAbility(const FGameplayAbilitySpecHand
 		return;
 	}
 
-	APlayerController* PC = Cast<APlayerController>(PS->GetOwner());
+	AController* PC = Cast<AController>(PS->GetOwner());
 	if (!PC)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);

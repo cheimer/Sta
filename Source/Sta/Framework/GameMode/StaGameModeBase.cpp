@@ -47,7 +47,8 @@ void AStaGameModeBase::PostLogin(APlayerController* NewPlayer)
 
 		if (CurrentTeamNum == PlayerNum)
 		{
-			GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::StartGameSettings);
+			FTimerHandle StartTimer;
+			GetWorldTimerManager().SetTimer(StartTimer, this, &ThisClass::StartGameSettings, 0.1f, false);
 		}
 	}
 }
@@ -151,15 +152,26 @@ bool AStaGameModeBase::CardInHand(const AController* Controller, const UCardData
 	return DeckState->HandCards.Contains(CardData);
 }
 
+const TArray<const UCardData*>& AStaGameModeBase::GetHandCards(const AController* Controller) const
+{
+	static const TArray<TObjectPtr<const UCardData>> Empty;
+	
+	if (const FDeckState* State = DeckStates.Find(Controller))
+	{
+		return State->HandCards;
+	}
+	else
+	{
+		return Empty;
+	}
+}
+
 void AStaGameModeBase::DrawCard(AController* Controller)
 {
-	AStaPlayerController* StaPC = Cast<AStaPlayerController>(Controller);
-	if (!StaPC) return;
+	if (!Controller || !CanDrawCard(Controller)) return;
 
 	FDeckState* DeckState = DeckStates.Find(Controller);
 	if (!DeckState) return;
-
-	if (!CanDrawCard(Controller)) return;
 
 	if (DeckState->DeckCards.Num() == 0)
 	{
@@ -176,24 +188,44 @@ void AStaGameModeBase::DrawCard(AController* Controller)
 	
 	DeckState->HandCards.Add(DrawCard);
 
-	StaPC->ClientDrawCard(DrawCard);
+	if (AStaPlayerController* StaPC = Cast<AStaPlayerController>(Controller))
+	{
+		StaPC->ClientDrawCard(DrawCard);
+	}
+	else if (AStaAIController* StaAIC = Cast<AStaAIController>(Controller))
+	{
+		//StaAIC->DrawCard()
+	}
+	else
+	{
+		check(false);
+	}
 	
 }
 
 void AStaGameModeBase::DiscardCard(AController* Controller, const UCardData* CardData)
 {
-	AStaPlayerController* StaPC = Cast<AStaPlayerController>(Controller);
-	if (!StaPC) return;
-	
+	if (!Controller || !CardData) return;
+	if (!CardInHand(Controller, CardData)) return;
+
 	FDeckState* DeckState = DeckStates.Find(Controller);
 	if (!DeckState) return;
 	
-	if (!CardInHand(Controller, CardData)) return;
-
 	DeckState->DiscardCards.Add(CardData);
 	DeckState->HandCards.RemoveSingle(CardData);
 	
-	StaPC->ClientDiscardCard(CardData);
+	if (AStaPlayerController* StaPC = Cast<AStaPlayerController>(Controller))
+	{
+		StaPC->ClientDiscardCard(CardData);
+	}
+	else if (AStaAIController* StaAIC = Cast<AStaAIController>(Controller))
+	{
+		//StaAIC->DiscardCard()
+	}
+	else
+	{
+		check(false);
+	}
 	
 }
 

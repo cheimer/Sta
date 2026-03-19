@@ -6,6 +6,7 @@
 #include "AIController.h"
 #include "StaAIController.generated.h"
 
+class UHTNComponent;
 class UAIStyleData;
 class UCardData;
 class AAreaBase;
@@ -22,22 +23,20 @@ public:
 
 	void RequestAction(FGameplayTag GameplayTag, const FGameplayEventData* EventData);
 
-	/*
-	void RequestMoveUnit(AAreaBase* SrcArea, AAreaBase* DestArea, float UnitNum);
-	void RequestAttackArea(AAreaBase* SrcArea, AAreaBase* DestArea, float UnitNum);
-	void RequestUseCard(const UCardData* CardData, AAreaBase* TargetArea);
-	void RequestDrawCard();
-	void RequestScanArea(AAreaBase* TargetArea);
-	*/
-
 protected:
 	virtual void BeginPlay() override;
+
+	virtual void OnPossess(APawn* InPawn) override;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|AI")
 	UBehaviorTree* BehaviorTree;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Deck")
 	UAIStyleData* DeckData;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Component")
+	UHTNComponent* HTNComponent;
+
 
 public:
 	UAIStyleData* GetDeckData() const { return DeckData; }

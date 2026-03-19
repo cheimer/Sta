@@ -89,7 +89,8 @@ void AStaPlayerState::ApplyDefaultEffects()
 
 void AStaPlayerState::HandleChargeComplete()
 {
-	if (!GetAbilitySystemComponent() || !GetPlayerController()) return;
+	AController* OwningController = Cast<AController>(GetOwner());
+	if (!GetAbilitySystemComponent() || !OwningController || !OwningController->GetPawn()) return;
 
 	float CurrentTime = GetWorld()->GetTimeSeconds();
 	if(CurrentTime - RecentChargeDrawTime < 0.1f)
@@ -100,7 +101,7 @@ void AStaPlayerState::HandleChargeComplete()
 	RecentChargeDrawTime = CurrentTime;
 	
 	FGameplayEventData EventData;
-	EventData.Target = GetPlayerController()->GetPawn();
+	EventData.Target = OwningController->GetPawn();
 	
 	GetAbilitySystemComponent()->HandleGameplayEvent(StaTags::Event::Card::Draw, &EventData);
 }

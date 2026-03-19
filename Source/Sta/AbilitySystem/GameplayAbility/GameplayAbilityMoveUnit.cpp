@@ -4,7 +4,6 @@
 #include "GameplayAbilityMoveUnit.h"
 
 #include "AbilitySystemComponent.h"
-#include "AbilitySystem/AttributeSet/AreaAttributeSet.h"
 #include "Area/AreaBase.h"
 #include "GameplayTag/StaTags.h"
 #include "Helper/StaHelper.h"

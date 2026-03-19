@@ -14,6 +14,7 @@
 #include "GameFramework/PlayerState.h"
 #include "Interface/Interactable.h"
 #include "Character/CommandPawn.h"
+#include "Kismet/GameplayStatics.h"
 #include "UI/StaHUD.h"
 
 AStaPlayerController::AStaPlayerController()
@@ -216,8 +217,10 @@ void AStaPlayerController::TryBindingHUD()
 	if (!StaHUD) return;
 	
 	StaHUD->SetASCBinding(PawnASC);
+	SetHUDColor();
+
 	bHUDBounding = true;
-	
+
 }
 
 void AStaPlayerController::TryInitDeckList()
@@ -236,6 +239,24 @@ void AStaPlayerController::TryInitDeckList()
 
 	ServerInitDeck(DeckList);
 	bInitDeckList = true;
+}
+
+void AStaPlayerController::SetHUDColor()
+{
+	IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(PlayerState);
+	if (!TeamAgent) return;
+	
+	AStaHUD* StaHUD = Cast<AStaHUD>(GetHUD());
+	if (!StaHUD) return;
+	
+	AAreaBase* RandArea = Cast<AAreaBase>(UGameplayStatics::GetActorOfClass(this, AAreaBase::StaticClass()));
+	if (!RandArea) return;
+
+	UTeamPaletteData* TeamPaletteData = RandArea->GetTeamPaletteData();
+	if (!TeamPaletteData || TeamPaletteData->PaletteColor.Num() <= TeamAgent->GetGenericTeamId().GetId()) return;
+	
+	StaHUD->SetTeamColor(TeamPaletteData->PaletteColor[TeamAgent->GetGenericTeamId().GetId()]);
+	
 }
 
 void AStaPlayerController::ServerInitDeck_Implementation(const TArray<FCardInfo>& DeckList)
@@ -269,6 +290,10 @@ void AStaPlayerController::SetControllerState(FGameplayTag NewStateTag, const TA
 			}
 		}
 	}
+	else if (StateTag == StaTags::State::Controller::Employing)
+	{
+		SetMyAreasHighlight(false);
+	}
 	
 	StateTag = NewStateTag;
 
@@ -278,6 +303,10 @@ void AStaPlayerController::SetControllerState(FGameplayTag NewStateTag, const TA
 		{
 			SetConnectedAreasHighlight(RecentInteractActor.Get(), true);
 		}
+	}
+	else if (StateTag == StaTags::State::Controller::Employing)
+	{
+		SetMyAreasHighlight(true);
 	}
 }
 
@@ -290,6 +319,11 @@ void AStaPlayerController::SetControllerTargeting()
 {
 	SetControllerState(StaTags::State::Controller::Targeting);
 
+}
+
+void AStaPlayerController::SetControllerEmploying()
+{
+	SetControllerState(StaTags::State::Controller::Employing);
 }
 
 void AStaPlayerController::ScanInteractingArea()
@@ -339,6 +373,19 @@ void AStaPlayerController::MoveUnit(const float UnitNum)
 	SetControllerIdle();
 }
 
+void AStaPlayerController::EmployUnit(AAreaBase* TargetArea)
+{
+	if (!TargetArea) return;
+	
+	FGameplayEventData EventData;
+	FGameplayAbilityTargetData_ActorArray* TargetData = new FGameplayAbilityTargetData_ActorArray();
+	TargetData->TargetActorArray.Add(TargetArea);
+	EventData.TargetData.Add(TargetData);
+	EventData.EventMagnitude = UnitEmployNum;
+	
+	TriggerGameplayEvent(StaTags::Event::Area::Employ, &EventData);
+}
+
 float AStaPlayerController::GetInteractAreaUnitNum()
 {
 	if (!RecentInteractActor.IsValid()) return 0.0f;
@@ -357,6 +404,26 @@ void AStaPlayerController::SetConnectedAreasHighlight(AActor* RootArea, const bo
 		for (AAreaBase* ConnectedArea : ConnectedAreas)
 		{
 			ConnectedArea->SetHighlight(bIsHighlight);
+		}
+	}
+}
+
+void AStaPlayerController::SetMyAreasHighlight(const bool bIsHighlight)
+{
+	IGenericTeamAgentInterface* StateTeamID = Cast<IGenericTeamAgentInterface>(PlayerState);
+	if (!StateTeamID) return;
+	
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(this, AAreaBase::StaticClass(), FoundActors);
+
+	for (AActor* FoundActor : FoundActors)
+	{
+		if (AAreaBase* FoundArea = Cast<AAreaBase>(FoundActor))
+		{
+			if (FoundArea->GetGenericTeamId() == StateTeamID->GetGenericTeamId())
+			{
+				FoundArea->SetHighlight(bIsHighlight);
+			}
 		}
 	}
 }
@@ -479,6 +546,15 @@ void AStaPlayerController::InteractEnd(const FInputActionValue& Value)
 				
 			}
 		}
+		else if (StateTag.MatchesTagExact(StaTags::State::Controller::Employing))
+		{
+			AAreaBase* HoveredArea = Cast<AAreaBase>(HoveredActor);
+			if (HoveredArea && OwningTeamId != FGenericTeamId::NoTeam && HoveredArea->GetGenericTeamId() == OwningTeamId)
+			{
+				EmployUnit(HoveredArea);
+				SetControllerState(StaTags::State::Controller::Idle);
+			}
+		}
 	}
 	
 	
@@ -490,7 +566,7 @@ void AStaPlayerController::Cancel(const FInputActionValue& Value)
 
 	OnControllerCanceled.Broadcast();
 
-	if (StateTag == StaTags::State::Controller::Targeting)
+	if (StateTag == StaTags::State::Controller::Targeting || StateTag == StaTags::State::Controller::Employing)
 	{
 		SetControllerState(StaTags::State::Controller::Idle);
 	}

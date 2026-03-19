@@ -21,6 +21,7 @@ public class Sta : ModuleRules
 			"GameplayTasks",
 			
 			"UMG",
+			"SlateCore",
 			
 			"Niagara",
 			

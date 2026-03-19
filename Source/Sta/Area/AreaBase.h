@@ -41,7 +41,9 @@ public:
 
 	void SetHighlight(bool bIsHighlight);
 	void SetAreaMaterialColor(FLinearColor Color);
+	void SetAreaMaterialAlpha(float AlphaValue);
 	void SetTextRenderComponent();
+	void SetTextRenderEmpty();
 
 	void SetLastScanTime();
 	float GetLastScanTime() const { return LastScanTime; }
@@ -97,6 +99,7 @@ protected:
 
 private:
 	void SetInteractOptions();
+	void UpdateVisibility();
 	void UpdateInteractOptions();
 
 	UPROPERTY(EditAnywhere, Category = "Sta|VFX")
@@ -130,5 +133,7 @@ public:
 	 * Get/Set Func
 	 */
 	APlayerState* GetOwningState() const {return OwningState.Get();}
+
+	UTeamPaletteData* GetTeamPaletteData() const {return TeamPaletteData;}
 
 };

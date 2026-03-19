@@ -42,6 +42,7 @@ namespace StaTags
 			UE_DEFINE_GAMEPLAY_TAG(Move, "StaTags.Event.Area.Move");
 			UE_DEFINE_GAMEPLAY_TAG(Attack, "StaTags.Event.Area.Attack");
 			UE_DEFINE_GAMEPLAY_TAG(Scan, "StaTags.Event.Area.Scan");
+			UE_DEFINE_GAMEPLAY_TAG(Employ, "StaTags.Event.Area.Employ");
 		}
 	}
 
@@ -71,6 +72,7 @@ namespace StaTags
 			UE_DEFINE_GAMEPLAY_TAG(Drag, "StaTags.State.Controller.Drag");
 			UE_DEFINE_GAMEPLAY_TAG(Menu, "StaTags.State.Controller.Menu");
 			UE_DEFINE_GAMEPLAY_TAG(Targeting, "StaTags.State.Controller.Targeting");
+			UE_DEFINE_GAMEPLAY_TAG(Employing, "StaTags.State.Controller.Employing");
 		}
 		
 		namespace Area

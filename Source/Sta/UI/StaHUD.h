@@ -27,12 +27,17 @@ public:
 	virtual void BeginPlay() override;
 
 	virtual void SetASCBinding(UAbilitySystemComponent* OwnerASC);
-	
+
 	UFUNCTION(BlueprintCallable, Category = "Sta|WidgetFunc")
 	void OnDrawButtonClicked();
 
+	UFUNCTION(BlueprintCallable, Category = "Sta|WidgetFunc")
+	void OnEmployeeButtonClicked();
+
 	void HandleControllerStateChanged(FGameplayTag BeforeState, FGameplayTag AfterState, const TArray<FInteractOption>& NewOptions);
 	void HandleControllerCanceled();
+
+	void SetTeamColor(const FLinearColor NewTeamColor);
 
 protected:
 	void OnCostChanged(const FOnAttributeChangeData& ChangedData);
@@ -64,5 +69,11 @@ private:
 
 	UPROPERTY()
 	TArray<UUserWidget*> MenuWidgets;
+	
+	FLinearColor TeamColor = FLinearColor::White;
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "Sta|WidgetFunc")
+	FLinearColor GetTeamColor() const {return TeamColor;}
 	
 };

@@ -58,8 +58,10 @@ public:
 
 	void SetControllerIdle();
 	void SetControllerTargeting();
+	void SetControllerEmploying();
 	void ScanInteractingArea();
 	void MoveUnit(const float UnitNum);
+	void EmployUnit(AAreaBase* TargetArea);
 
 	float GetInteractAreaUnitNum();
 
@@ -124,8 +126,10 @@ protected:
 private:
 	void TryBindingHUD();
 	void TryInitDeckList();
+	void SetHUDColor();
 
 	void SetConnectedAreasHighlight(AActor* RootArea, const bool bIsHighlight);
+	void SetMyAreasHighlight(const bool bIsHighlight);
 
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Input")
 	UInputMappingContext* MappingContext;
@@ -146,6 +150,8 @@ private:
 	bool bInitDeckList = false;
 
 	FGameplayTag StateTag = StaTags::State::Controller::Idle;
+
+	float UnitEmployNum = 5.0f;
 	
 public:
 	AActor* GetRecentInteractActor() const {return RecentInteractActor.Get();}

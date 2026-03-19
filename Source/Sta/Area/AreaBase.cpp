@@ -84,8 +84,8 @@ void AAreaBase::BeginPlay()
 void AAreaBase::OnValueChanged(const FOnAttributeChangeData& Data)
 {
 	if (!HasAuthority()) return;
+	
 	if (!GetAttributeSet()) return;
-
 	OnAreaValueChanged.Broadcast(this, GetAttributeSet()->GetUnitNum(), GetAttributeSet()->GetDefense());
 	
 	StaDebug::Print(FString::Printf(TEXT("%s Value : Before %.0f, After %.0f\n"), *GetNameSafe(this), Data.OldValue, Data.NewValue));
@@ -95,8 +95,8 @@ void AAreaBase::OnValueChanged(const FOnAttributeChangeData& Data)
 void AAreaBase::OnBluffChanged(const FOnAttributeChangeData& Data)
 {
 	if (!HasAuthority()) return;
+	
 	if (!GetAttributeSet()) return;
-
 	OnAreaBluffChanged.Broadcast(this, GetAttributeSet()->GetBluffUnitAdd(), GetAttributeSet()->GetBluffDefenseAdd());
 	
 	StaDebug::Print(FString::Printf(TEXT("%s Bluff : Before %.0f, After %.0f\n"), *GetNameSafe(this), Data.OldValue, Data.NewValue));
@@ -222,16 +222,58 @@ void AAreaBase::SetHighlight(bool bIsHighlight)
 
 void AAreaBase::OnRep_OwningState()
 {
+	UpdateVisibility();
+
+	for (AAreaBase* ConnectedArea : GetConnectedArea())
+	{
+		ConnectedArea->UpdateVisibility();
+	}
+	
+	UpdateInteractOptions();
+}
+
+void AAreaBase::UpdateVisibility()
+{
 	if (!OwningState.IsValid() || !GetWorld()->GetFirstPlayerController() || !GetWorld()->GetFirstPlayerController()->PlayerState)
 	{
 		SetAreaMaterialColor(TeamPaletteData->GetDefaultColor());
 		return;
 	}
+	
+	IGenericTeamAgentInterface* LocalTeam = Cast<IGenericTeamAgentInterface>(GetWorld()->GetFirstPlayerController()->PlayerState);
+	if (!LocalTeam)
+	{
+		SetAreaMaterialColor(TeamPaletteData->GetDefaultColor());
+		return;
+	}
 
-	SetAreaMaterialColor(TeamPaletteData->GetColorByTeamId(GetGenericTeamId()));
-	SetTextRenderComponent();
-	UpdateInteractOptions();
+	bool bIsVisible = false;
+	if (LocalTeam->GetGenericTeamId() == GetGenericTeamId())
+	{
+		bIsVisible = true;
+	}
+	else
+	{
+		for (AAreaBase* ConnectArea : GetConnectedArea())
+		{
+			if (ConnectArea->GetGenericTeamId() == LocalTeam->GetGenericTeamId())
+			{
+				bIsVisible = true;
+				break;
+			}
+		}
+	}
 
+	if (bIsVisible)
+	{
+		SetAreaMaterialColor(TeamPaletteData->GetColorByTeamId(GetGenericTeamId()));
+		SetTextRenderComponent();
+	}
+	else
+	{
+		SetAreaMaterialAlpha(TeamPaletteData->GetInvisibleValue());
+		SetTextRenderEmpty();
+	}
 }
 
 void AAreaBase::SetAreaMaterialColor(FLinearColor Color)
@@ -248,6 +290,27 @@ void AAreaBase::SetAreaMaterialColor(FLinearColor Color)
 
 	AreaMI->SetVectorParameterValue(FName("GlowColor"), Color);
 	
+}
+
+void AAreaBase::SetAreaMaterialAlpha(float AlphaValue)
+{
+	if (!AreaMesh) return;
+	
+	UMaterialInstanceDynamic* AreaMI = Cast<UMaterialInstanceDynamic>(AreaMesh->GetMaterial(0));
+	if (!AreaMI)
+	{
+		AreaMesh->CreateDynamicMaterialInstance(0);
+		AreaMI = Cast<UMaterialInstanceDynamic>(AreaMesh->GetMaterial(0));
+		if (!AreaMI) return;
+	}
+
+	FLinearColor AreaColor;
+	AreaMI->GetVectorParameterValue(FName("GlowColor"), AreaColor);
+	
+	FLinearColor HSVColor = AreaColor.LinearRGBToHSV();
+	HSVColor.B *= AlphaValue;
+	
+	AreaMI->SetVectorParameterValue(FName("GlowColor"), HSVColor.HSVToLinearRGB());
 }
 
 void AAreaBase::SetTextRenderComponent()
@@ -270,9 +333,15 @@ void AAreaBase::SetTextRenderComponent()
 	}
 	
 	TextRenderComponent->SetText(GetSimpleInfoText(StateTeamID->GetGenericTeamId()));
-	TextRenderComponent->SetTextRenderColor(
-		TeamPaletteData->GetColorByTeamId(GetGenericTeamId()).ToFColor(true));
+	TextRenderComponent->SetTextRenderColor(TeamPaletteData->GetColorByTeamId(GetGenericTeamId()).ToFColor(true));
 	
+}
+
+void AAreaBase::SetTextRenderEmpty()
+{
+	if (!TextRenderComponent) return;
+	
+	TextRenderComponent->SetText(FText::GetEmpty());
 }
 
 void AAreaBase::SetLastScanTime()

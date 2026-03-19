@@ -7,7 +7,7 @@
 
 UAreaAttributeSet::UAreaAttributeSet()
 {
-	InitUnitNum(0.0f);
+	InitUnitNum(5.0f);
 	InitBluffUnitAdd(0.0f);
 	InitMaxUnitNum(99.0f);
 	

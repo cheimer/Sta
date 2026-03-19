@@ -21,6 +21,10 @@ void AStaHUD::BeginPlay()
 
 	CurrentWidget = CreateWidget<UPlayWidget>(GetWorld(), MainWidgetClass);
 	CurrentWidget->AddToViewport();
+	CurrentWidget->SetButtonTeamColor(TeamColor);
+
+	CurrentWidget->OnDrawClicked.AddUObject(this, &ThisClass::OnDrawButtonClicked);
+	CurrentWidget->OnEmployClicked.AddUObject(this, &ThisClass::OnEmployeeButtonClicked);
 
 	if (AStaPlayerController* PlayerController = Cast<AStaPlayerController>(GetOwningPlayerController()))
 	{
@@ -64,6 +68,24 @@ void AStaHUD::OnDrawButtonClicked()
 	EventData.Target = OwnerPlayerController->GetPawn();
 	
 	OwnerPlayerController->TriggerGameplayEvent(StaTags::Event::Card::Draw, &EventData);
+	
+}
+
+void AStaHUD::OnEmployeeButtonClicked()
+{
+	AStaPlayerController* OwnerPlayerController = Cast<AStaPlayerController>(GetOwningPlayerController());
+	if (!OwnerPlayerController) return;
+
+	OwnerPlayerController->SetControllerEmploying();
+}
+
+void AStaHUD::SetTeamColor(const FLinearColor NewTeamColor)
+{
+	TeamColor = NewTeamColor;
+	if (CurrentWidget)
+	{
+		CurrentWidget->SetButtonTeamColor(NewTeamColor);
+	}
 	
 }
 

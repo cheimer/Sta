@@ -46,6 +46,8 @@ public:
 	bool CanDrawCard(const AController* Controller);
 	bool CardInHand(const AController* Controller, const UCardData* CardData);
 
+	const TArray<const UCardData*>& GetHandCards(const AController* Controller) const;
+
 	void DrawCard(AController* Controller);
 	void DiscardCard(AController* Controller, const UCardData* CardData);
 
