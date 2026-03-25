@@ -3,6 +3,7 @@
 
 #include "StaGameModeBase.h"
 
+#include "AbilitySystemComponent.h"
 #include "Area/AreaBase.h"
 #include "Character/AIPawn.h"
 #include "Controller/StaPlayerController.h"
@@ -57,6 +58,7 @@ void AStaGameModeBase::StartGameSettings()
 {
 	SpawnAIPawns();
 	InitAreaState();
+	InItPlayerState();
 }
 
 void AStaGameModeBase::SpawnAIPawns()
@@ -108,6 +110,24 @@ void AStaGameModeBase::InitAreaState()
 			}
 		}
 	}
+}
+
+void AStaGameModeBase::InItPlayerState()
+{
+	check(InitPlayerStateEffectClass);
+
+	for (APlayerState* PlayerState : GetGameState<AGameStateBase>()->PlayerArray)
+	{
+		IAbilitySystemInterface* PlayerAbilityInterface = Cast<IAbilitySystemInterface>(PlayerState);
+		if (!PlayerAbilityInterface) continue;;
+
+		UAbilitySystemComponent* AbilitySystemComponent = PlayerAbilityInterface->GetAbilitySystemComponent();
+		if (!AbilitySystemComponent) continue;
+
+		AbilitySystemComponent->ApplyGameplayEffectToSelf(
+			InitPlayerStateEffectClass->GetDefaultObject<UGameplayEffect>(), 1.0f, AbilitySystemComponent->MakeEffectContext());
+	}
+
 }
 
 void AStaGameModeBase::InitDeckState(const TArray<FCardInfo>& DeckList, AController* Controller)

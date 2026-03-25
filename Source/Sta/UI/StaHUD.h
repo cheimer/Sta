@@ -5,8 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
 #include "Interface/Interactable.h"
+#include "Subsystem/NotifySubsystem.h"
 #include "StaHUD.generated.h"
 
+class UNotifyListWidget;
+class UNotifyEntryWidget;
 class UPopUpWidget;
 struct FGameplayTag;
 class UOrderListWidget;
@@ -39,6 +42,8 @@ public:
 
 	void SetTeamColor(const FLinearColor NewTeamColor);
 
+	void NotifyText(ENotifyPriority NotifyPriority, const FText& NotifyText);
+
 protected:
 	void OnCostChanged(const FOnAttributeChangeData& ChangedData);
 	void OnDrawChargeChanged(const FOnAttributeChangeData& ChangedData);
@@ -54,8 +59,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Widget")
 	TSubclassOf<UPopUpWidget> AreaUnitConfirmWidgetClass;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|Widget")
+	TSubclassOf<UNotifyListWidget> NotifyListWidgetClass;
+
 	UPROPERTY(Transient)
 	UPlayWidget* CurrentWidget;
+
+	UPROPERTY(Transient)
+	UNotifyListWidget* NotifyWidget;
 
 private:
 	FDelegateHandle CostChangedHandle;

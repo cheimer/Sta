@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "Area/AreaBase.h"
 #include "GameplayTag/StaTags.h"
+#include "Subsystem/NotifySubsystem.h"
 
 UGameplayAbilityEmployArea::UGameplayAbilityEmployArea()
 {

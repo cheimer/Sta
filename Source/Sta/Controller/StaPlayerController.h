@@ -8,6 +8,7 @@
 #include "InputTriggers.h"
 #include "GameFramework/PlayerController.h"
 #include "GameplayTag/StaTags.h"
+#include "Subsystem/NotifySubsystem.h"
 #include "StaPlayerController.generated.h"
 
 
@@ -65,8 +66,10 @@ public:
 
 	float GetInteractAreaUnitNum();
 
+	void NotifyToHUD(ENotifyPriority Priority, const FText& NotifyText);
+
 	void TriggerGameplayEvent(FGameplayTag GameplayTag, const FGameplayEventData* EventData);
-	
+
 	UFUNCTION(Server, Reliable)
 	void ServerTriggerGameplayEvent(FGameplayTag GameplayTag, const FGameplayEventData& EventData);
 
@@ -102,6 +105,9 @@ protected:
 	virtual void OnRep_Pawn() override;
 	virtual void OnRep_PlayerState() override;
 
+	UFUNCTION(Client, Reliable)
+	void ClientNotifyToHUD(ENotifyPriority Priority, const FText& NotifyText);
+	
 #pragma region InputAction
 	UFUNCTION()
 	void InteractBegin(const FInputActionValue& Value);
@@ -156,5 +162,6 @@ private:
 public:
 	AActor* GetRecentInteractActor() const {return RecentInteractActor.Get();}
 	AActor* GetRecentTargetActor() const {return RecentTargetActor.Get();}
+	FGenericTeamId GetTeamId();
 
 };

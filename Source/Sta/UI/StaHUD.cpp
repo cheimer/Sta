@@ -10,6 +10,7 @@
 #include "Controller/StaPlayerController.h"
 #include "GameplayTag/StaTags.h"
 #include "Helper/StaHelper.h"
+#include "Notify/NotifyListWidget.h"
 #include "PopUp/InfoWidget.h"
 #include "PopUp/OrderListWidget.h"
 #include "PopUp/PopUpWidget.h"
@@ -31,7 +32,9 @@ void AStaHUD::BeginPlay()
 		PlayerController->OnControllerStateChanged.AddUObject(this, &ThisClass::HandleControllerStateChanged);
 		PlayerController->OnControllerCanceled.AddUObject(this, &ThisClass::HandleControllerCanceled);
 	}
-	
+
+	NotifyWidget = CreateWidget<UNotifyListWidget>(GetWorld(), NotifyListWidgetClass);
+	NotifyWidget->AddToViewport();
 }
 
 void AStaHUD::SetASCBinding(UAbilitySystemComponent* OwnerASC)
@@ -87,6 +90,13 @@ void AStaHUD::SetTeamColor(const FLinearColor NewTeamColor)
 		CurrentWidget->SetButtonTeamColor(NewTeamColor);
 	}
 	
+}
+
+void AStaHUD::NotifyText(ENotifyPriority NotifyPriority, const FText& NotifyText)
+{
+	if (!NotifyWidget) return;
+
+	NotifyWidget->AddNotify(NotifyPriority, NotifyText);
 }
 
 void AStaHUD::HandleControllerStateChanged(FGameplayTag BeforeState, FGameplayTag AfterState, const TArray<FInteractOption>& NewOptions)

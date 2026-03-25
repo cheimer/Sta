@@ -396,6 +396,31 @@ float AStaPlayerController::GetInteractAreaUnitNum()
 	return InteractArea->GetAttributeSet()->GetUnitNum();
 }
 
+void AStaPlayerController::NotifyToHUD(ENotifyPriority Priority, const FText& NotifyText)
+{
+	if (HasAuthority())
+	{
+		ClientNotifyToHUD(Priority, NotifyText);
+	}
+	else
+	{
+		AStaHUD* StaHUD = Cast<AStaHUD>(GetHUD());
+		if (!StaHUD) return;
+
+		StaHUD->NotifyText(Priority, NotifyText);
+	}
+	
+}
+
+void AStaPlayerController::ClientNotifyToHUD_Implementation(ENotifyPriority Priority, const FText& NotifyText)
+{
+	AStaHUD* StaHUD = Cast<AStaHUD>(GetHUD());
+	if (!StaHUD) return;
+
+	StaHUD->NotifyText(Priority, NotifyText);
+
+}
+
 void AStaPlayerController::SetConnectedAreasHighlight(AActor* RootArea, const bool bIsHighlight)
 {
 	if (AAreaBase* InteractedArea = Cast<AAreaBase>(RootArea))
@@ -426,6 +451,14 @@ void AStaPlayerController::SetMyAreasHighlight(const bool bIsHighlight)
 			}
 		}
 	}
+}
+
+FGenericTeamId AStaPlayerController::GetTeamId()
+{
+	IGenericTeamAgentInterface* TeamAgent = Cast<IGenericTeamAgentInterface>(PlayerState);
+	if (!TeamAgent) return FGenericTeamId::NoTeam;
+
+	return TeamAgent->GetGenericTeamId();
 }
 
 /**

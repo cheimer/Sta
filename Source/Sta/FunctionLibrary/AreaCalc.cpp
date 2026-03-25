@@ -33,5 +33,5 @@ float UAreaCalc::CalcGetDefenseValue(const float UnitNum, const float Defense)
 
 float UAreaCalc::CalcDefenseValueToUnitNum(const float DefenseValue, const float Defense)
 {
-	return DefenseValue * (1 / Defense);
+	return FMath::FloorToInt(DefenseValue * (1 / Defense));
 }

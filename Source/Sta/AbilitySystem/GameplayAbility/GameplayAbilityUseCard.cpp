@@ -97,7 +97,13 @@ bool UGameplayAbilityUseCard::CanUseCardCost(const UCardData* CardData)
 
 	float CurrentCost = OwnerASC->GetNumericAttribute(UPlayerAttributeSet::GetCostAttribute());
 	
-	return CurrentCost >= CardData->Cost;
+	bool bIsCanUseCard = CurrentCost >= CardData->Cost;
+	if (!bIsCanUseCard)
+	{
+		NotifyToHUD(GetCurrentActorInfo());
+	}
+
+	return bIsCanUseCard;
 }
 
 void UGameplayAbilityUseCard::ApplyCardCost(const UCardData* CardData)

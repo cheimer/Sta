@@ -17,6 +17,7 @@
 #include "Helper/StaHelper.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "Subsystem/NotifySubsystem.h"
 
 
 AAreaBase::AAreaBase()
@@ -158,6 +159,8 @@ void AAreaBase::AttackedBy(AAreaBase* Attacker, const float AttackUnitNum)
 
 	FGameplayEffectSpecHandle DamageSpec = GetAbilitySystemComponent()->MakeOutgoingSpec(UnitChangeEffectClass, 1.0f, EffectContext);
 	if (!DamageSpec.IsValid()) return;
+	
+	UNotifySubsystem* NotifySubsystem = GetWorld()->GetSubsystem<UNotifySubsystem>();
 
 	if (DefenseValue >= AttackUnitNum)
 	{
@@ -165,11 +168,18 @@ void AAreaBase::AttackedBy(AAreaBase* Attacker, const float AttackUnitNum)
 		DamageSpec.Data->SetSetByCallerMagnitude(StaTags::SetByCaller::UnitNum, -(GetAttributeSet()->GetUnitNum() - RemainUnitNum));
 		
 		GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*DamageSpec.Data.Get());
+
+		if (NotifySubsystem)
+		{
+			NotifySubsystem->NotifyAreaAttacked(ENotifyPriority::Medium, Attacker->GetGenericTeamId(), this, AttackUnitNum);
+			NotifySubsystem->NotifyAreaAttackFail(ENotifyPriority::Medium, Attacker->GetGenericTeamId(), this, AttackUnitNum);
+		}
 	}
 	else
 	{
-		DamageSpec.Data->SetSetByCallerMagnitude(StaTags::SetByCaller::UnitNum, -GetAttributeSet()->GetUnitNum());
+		FGenericTeamId BeforeTeamId = GetGenericTeamId();
 		
+		DamageSpec.Data->SetSetByCallerMagnitude(StaTags::SetByCaller::UnitNum, -GetAttributeSet()->GetUnitNum());
 		GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*DamageSpec.Data.Get());
 		
 		OwningState = Attacker->GetOwningState();
@@ -177,9 +187,16 @@ void AAreaBase::AttackedBy(AAreaBase* Attacker, const float AttackUnitNum)
 		DamageSpec.Data->SetSetByCallerMagnitude(StaTags::SetByCaller::UnitNum, AttackUnitNum - DefenseValue);
 		
 		GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*DamageSpec.Data.Get());
+
+		if (NotifySubsystem)
+		{
+			NotifySubsystem->NotifyAreaLost(ENotifyPriority::High, BeforeTeamId, this);
+			NotifySubsystem->NotifyAreaCaptured(ENotifyPriority::High, this, AttackUnitNum, GetAttributeSet()->GetUnitNum());
+		}
 	}
 
 	UpdateInteractOptions();
+
 
 }
 

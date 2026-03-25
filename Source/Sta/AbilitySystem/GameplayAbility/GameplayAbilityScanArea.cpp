@@ -7,6 +7,7 @@
 #include "GameFramework/PlayerState.h"
 #include "GameplayTag/StaTags.h"
 #include "Subsystem/AreaInfoSubsystem.h"
+#include "Subsystem/NotifySubsystem.h"
 
 UGameplayAbilityScanArea::UGameplayAbilityScanArea()
 {

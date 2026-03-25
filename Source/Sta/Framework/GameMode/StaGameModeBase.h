@@ -61,6 +61,7 @@ private:
 	
 	void SpawnAIPawns();
 	void InitAreaState();
+	void InItPlayerState();
 	
 	UPROPERTY()
 	TMap<AController*, FDeckState> DeckStates;
@@ -82,6 +83,9 @@ private:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Sta|Value")
 	int32 MaxCardNum = 8;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Sta|GameplayEffect")
+	TSubclassOf<UGameplayEffect> InitPlayerStateEffectClass;
 
 	int32 CurrentTeamNum = 0;
 

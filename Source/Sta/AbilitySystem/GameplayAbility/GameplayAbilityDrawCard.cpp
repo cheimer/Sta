@@ -9,6 +9,7 @@
 #include "GameFramework/PlayerState.h"
 #include "GameplayTag/StaTags.h"
 #include "Helper/StaHelper.h"
+#include "Subsystem/NotifySubsystem.h"
 
 UGameplayAbilityDrawCard::UGameplayAbilityDrawCard()
 {
@@ -39,14 +40,14 @@ void UGameplayAbilityDrawCard::ActivateAbility(const FGameplayAbilitySpecHandle 
 		return;
 	}
 
-	AController* PC = Cast<AController>(PS->GetOwner());
-    if (!PC)
+	AController* Controller = Cast<AController>(PS->GetOwner());
+    if (!Controller)
     {
     	EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
     	return;
     }
 	
-	if (!GameMode->CanDrawCard(PC))
+	if (!GameMode->CanDrawCard(Controller))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -65,7 +66,7 @@ void UGameplayAbilityDrawCard::ActivateAbility(const FGameplayAbilitySpecHandle 
 	
 	ChargeTimeReset();
 
-	GameMode->DrawCard(PC);
+	GameMode->DrawCard(Controller);
 	
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
